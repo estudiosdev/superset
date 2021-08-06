@@ -500,7 +500,7 @@ function DashboardList(props: DashboardListProps) {
 
   function renderCard(dashboard: Dashboard) {
     const { userId } = props.user;
-    const userKey = getFromLocalStorage(userId.toString(), null);
+    const userKey = getFromLocalStorage(String(userId), null);
     return (
       <CardStylesOverrides>
         <DashboardCard

@@ -6551,7 +6551,7 @@ msgstr "Registro Acciones"
 #: superset-frontend/src/views/CRUD/data/query/QueryList.tsx:316
 #: superset-frontend/src/views/CRUD/data/savedquery/SavedQueryList.tsx:349
 msgid "Actions"
-msgstr ""
+msgstr "Acciones"
 
 #: superset-frontend/src/views/CRUD/alert/AlertList.tsx:347
 #: superset-frontend/src/views/CRUD/annotation/AnnotationList.tsx:218

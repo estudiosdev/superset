@@ -30,7 +30,7 @@
       "Dashboard Emails": ["Programar Dashboard"],
       "Chart Email Schedules": ["Programar Gráfico"],
       "Alerts": ["Alertas"],
-      "Alerts & Reports": [""],
+      "Alerts & Reports": ["Alertas & Reportes"],
       "Access requests": ["Solicitudes de Acceso"],
       "Druid Datasources": ["Fuentes de Datos Druid"],
       "Druid Clusters": ["Clusters Druid"],
@@ -1229,10 +1229,10 @@
       "day of the week": [""],
       "every hour": ["1 hora"],
       "every minute UTC": [""],
-      "year": [""],
-      "month": [""],
-      "week": [""],
-      "day": [""],
+      "year": ["año"],
+      "month": ["mes"],
+      "week": ["semana"],
+      "day": ["dia"],
       "hour": ["1 hora"],
       "minute": ["1 minuto"],
       "reboot": [""],
@@ -1320,7 +1320,7 @@
       "You don't have the rights to alter this title.": [
         "No tienes los derechos para alterar este título."
       ],
-      "Unexpected error": [""],
+      "Unexpected error": ["Ha ocurrido un error"],
       "Click to favorite/unfavorite": ["Haz clic para favorito/no favorito"],
       "An error occurred while fetching dashboards": [
         "Se produjo un error al crear el origen de datos"
@@ -1339,8 +1339,8 @@
       "Please reach out to the Chart Owner for assistance.": [""],
       "Chart Owner: %s": ["El Gráfico ha cambiado"],
       "%s Error": ["Error"],
-      "See more": [""],
-      "See less": [""],
+      "See more": ["Ver más"],
+      "See less": ["Ver menos"],
       "Copy message": ["Mensaje de Aviso"],
       "Close": ["Cerrar"],
       "This was triggered by:": [""],
@@ -1364,7 +1364,7 @@
       "%s Selected": [""],
       "Deselect all": ["¿Realmente quieres borrar todo?"],
       "%s-%s of %s": [""],
-      "Settings": ["Configuracion"],
+      "Settings": ["Configuración"],
       "About": [""],
       "SQL query": ["Parar query"],
       "There is not enough space for this component. Try decreasing its width, or increasing the destination width.": [
@@ -1407,7 +1407,7 @@
       ],
       "Superset dashboard": ["Dashboard Superset"],
       "Check out this dashboard: ": [""],
-      "Refresh dashboard": ["Auto actualizar el dashboard"],
+      "Refresh dashboard": ["Refrescar el dashboard"],
       "Set auto-refresh interval": [
         "Configurar el intervalo de actualización del dashboard"
       ],
@@ -1447,7 +1447,7 @@
       "This dashboard is published. Click to make it a draft.": [
         "Este dashboard es público, Haz click para hacerlo borrador"
       ],
-      "Draft": [""],
+      "Draft": ["Borrador"],
       "Don't refresh": ["No Actualizar"],
       "10 seconds": ["10 segundos"],
       "30 seconds": ["30 segundos"],
@@ -1459,9 +1459,9 @@
       "12 hours": ["12 horas"],
       "24 hours": ["24 horas"],
       "Refresh interval": ["Intérvalo de actualización"],
-      "Refresh frequency": [""],
+      "Refresh frequency": ["Frecuencia de actualización"],
       "Are you sure you want to proceed?": [""],
-      "Save for this session": [""],
+      "Save for this session": ["Guardar para esta sesión"],
       "You must pick a name for the new dashboard": [
         "Debes elegir un nombre para el nuevo Dashboard"
       ],
@@ -1476,7 +1476,7 @@
       "Annotation layers are still loading.": [""],
       "One ore more annotation layers failed loading.": [""],
       "Cached %s": [""],
-      "Fetched %s": [""],
+      "Fetched %s": ["Cargado %s"],
       "Minimize chart": ["Minimizar"],
       "Maximize chart": ["Maximizar"],
       "Force refresh": ["Forzar actualización"],
@@ -1484,15 +1484,15 @@
       "View chart in Explore": [""],
       "Share chart": ["Compartir gráfico"],
       "Export CSV": ["Exportar CSV"],
-      "Applied Filters (%d)": [""],
-      "Incompatible Filters (%d)": [""],
-      "Unset Filters (%d)": [""],
-      "Search...": [""],
-      "No filter is selected.": [""],
-      "Editing 1 filter:": [""],
+      "Applied Filters (%d)": ["Filtros aplicados (%d)"],
+      "Incompatible Filters (%d)": ["Filtros incompatibles (%d)"],
+      "Unset Filters (%d)": ["Filtros no aplicados (%d)"],
+      "Search...": ["Buscar..."],
+      "No filter is selected.": ["Filtros no seleccionados"],
+      "Editing 1 filter:": ["Editando 1 filtro"],
       "Batch editing %d filters:": [""],
       "Configure filter scopes": [""],
-      "There are no filters in this dashboard.": [""],
+      "There are no filters in this dashboard.": ["No hay filtros en este dashboard."],
       "Expand all": ["Expandir todo"],
       "Collapse all": ["Contraer todo"],
       "This markdown component has an error.": [""],
@@ -1945,10 +1945,10 @@
       "Last run": ["Último cambio"],
       "Notification method": ["Capas de Anotación"],
       "Execution log": ["Registro Acciones"],
-      "Actions": [""],
+      "Actions": ["Acciones"],
       "Bulk select": [""],
       "No %s yet": [""],
-      "Created by": ["Creado el"],
+      "Created by": ["Creado por"],
       "An error occurred while fetching created by values: %s": [
         "Ha ocurrido un error cargando los CSS disponibles"
       ],
@@ -2060,7 +2060,7 @@
         ""
       ],
       "There was an issue deleting the selected charts: %s": [""],
-      "Modified by": ["Modificado"],
+      "Modified by": ["Modificado por"],
       "Owner": ["Propietarios"],
       "An error occurred while fetching chart owners values: %s": [
         "Ha ocurrido un error cargando los CSS disponibles"
@@ -2260,7 +2260,7 @@
       ],
       "Query name": ["Consulta"],
       "Edited": ["Editar"],
-      "Created": ["Creado el"],
+      "Created": ["Creado por"],
       "Viewed": ["Ver querie"],
       "Examples": ["Ver ejemplos"],
       "Mine": [""],
@@ -2307,7 +2307,24 @@
       "Check to include time origin dropdown": ["Mostrar un filtro de tiempo"],
       "Limit selector values": [""],
       "These filters apply to the values available in the dropdowns": [""],
-      "Time-series Table": [""]
+      "Time-series Table": [""],
+      "Powered by Apache Superset": ["  "],
+      "Any":["Todos"],
+      "All":["Todos"],
+      "No results were returned for this query. If you expected results to be returned, ensure any filters are configured properly and the datasource contains data for the selected time range.": [
+       "No hay resultados para esta consulta. Si desea obtener resultados, asegúrese de que los filtros estén configurados correctamente y que la fuente contenga datos para el rango de tiempo seleccionado."
+      ],
+      "No Results":["Sin resultados"],
+      "Copy dashboard URL": ["Copiar URL del dashboard"],
+      "Share dashboard by email":["Compartir dashboard via email"],
+      "Enter fullscreen":["Entrar a pantalla completa"],
+      "Exit fullscreen":["Salir de pantalla completa"],
+      "Sort:": ["Ordenar por:"],
+      "Alphabetical":["Alfabeticamente"],
+      "Recently modified":["Modificado reciente"],
+      "Least recently modified":["No modificado reciente"],
+      "Copy chart URL":["Copiar URL del gráfico"],
+      "Share chart by email":["Compartir gráfico via email"]
     }
   }
 }
