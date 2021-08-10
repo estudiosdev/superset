@@ -69,6 +69,15 @@ const StyledAnchor = styled.a`
   padding-left: ${({ theme }) => theme.gridUnit}px;
 `;
 
+const WaterMark = styled.span`
+  font-size: 13px;
+  color: #b0b4c3;
+  margin: 0 ${({ theme }) => theme.gridUnit * 4}px;
+  @media (max-width: 1070px) {
+    display: none;
+  }
+`;
+
 const { SubMenu } = Menu;
 
 interface RightMenuProps {
@@ -86,6 +95,9 @@ const RightMenu = ({
 }: RightMenuProps) => (
   <StyledDiv align={align}>
     <Menu mode="horizontal">
+      {navbarRight.show_watermark && (
+        <WaterMark>{t('Powered by Apache Superset')}</WaterMark>
+      )}
       {!navbarRight.user_is_anonymous && (
         <SubMenu
           data-test="new-dropdown"
@@ -107,66 +119,63 @@ const RightMenu = ({
           ))}
         </SubMenu>
       )}
-      <SubMenu title={t("Settings")} icon={<Icons.TriangleDown iconSize="xl" />}>
-        {settings.map((section, index) => [
-          <Menu.ItemGroup key={`${section.label}`} title={section.label}>
-            {section.childs?.map(child => {
-              if (typeof child !== 'string') {
-                return (
-                  <Menu.Item key={`${child.label}`}>
-                    {isFrontendRoute(child.url) ? (
-                      <Link to={child.url || ''}>{child.label}</Link>
-                    ) : (
-                      <a href={child.url}>{child.label}</a>
-                    )}
-                  </Menu.Item>
-                );
-              }
-              return null;
-            })}
-          </Menu.ItemGroup>,
-          index < settings.length - 1 && <Menu.Divider />,
-        ])}
+      {!navbarRight.user_is_anonymous && (
+        <SubMenu title={t('Settings')} icon={<Icons.TriangleDown iconSize="xl" />}>
+          {settings.map((section, index) => [
+            <Menu.ItemGroup key={`${section.label}`} title={section.label}>
+              {section.childs?.map(child => {
+                if (typeof child !== 'string') {
+                  return (
+                    <Menu.Item key={`${child.label}`}>
+                      {isFrontendRoute(child.url) ? (
+                        <Link to={child.url || ''}>{child.label}</Link>
+                      ) : (
+                        <a href={child.url}>{child.label}</a>
+                      )}
+                    </Menu.Item>
+                  );
+                }
+                return null;
+              })}
+            </Menu.ItemGroup>,
+            index < settings.length - 1 && <Menu.Divider />,
+          ])}
 
-        {!navbarRight.user_is_anonymous && [
-          <Menu.Divider key="user-divider" />,
-          <Menu.ItemGroup key="user-section" title={t('User')}>
-            {navbarRight.user_profile_url && (
-              <Menu.Item key="profile">
-                <a href={navbarRight.user_profile_url}>{t('Profile')}</a>
+          {!navbarRight.user_is_anonymous && [
+            <Menu.Divider key="user-divider" />,
+            <Menu.ItemGroup key="user-section" title={t('User')}>
+              {navbarRight.user_profile_url && (
+                <Menu.Item key="profile">
+                  <a href={navbarRight.user_profile_url}>{t('Profile')}</a>
+                </Menu.Item>
+              )}
+              <Menu.Item key="info">
+                <a href={navbarRight.user_info_url}>{t('Info')}</a>
               </Menu.Item>
-            )}
-            <Menu.Item key="info">
-              <a href={navbarRight.user_info_url}>{t('Info')}</a>
-            </Menu.Item>
-            <Menu.Item key="logout">
-              <a href={navbarRight.user_logout_url}>{t('Logout')}</a>
-            </Menu.Item>
-          </Menu.ItemGroup>,
-        ]}
-        {(navbarRight.version_string || navbarRight.version_sha) && [
-          <Menu.Divider key="version-info-divider" />,
-          <Menu.ItemGroup key="about-section" title={t('About')}>
-            <div className="about-section">
-              {navbarRight.show_watermark && (
-                <div css={versionInfoStyles}>
-                  {t('Powered by Apache Superset')}
-                </div>
-              )}
-              {navbarRight.version_string && (
-                <div css={versionInfoStyles}>
-                  Version: {navbarRight.version_string}
-                </div>
-              )}
-              {navbarRight.version_sha && (
-                <div css={versionInfoStyles}>
-                  SHA: {navbarRight.version_sha}
-                </div>
-              )}
-            </div>
-          </Menu.ItemGroup>,
-        ]}
-      </SubMenu>
+              <Menu.Item key="logout">
+                <a href={navbarRight.user_logout_url}>{t('Logout')}</a>
+              </Menu.Item>
+            </Menu.ItemGroup>,
+          ]}
+          {(navbarRight.version_string || navbarRight.version_sha) && [
+            <Menu.Divider key="version-info-divider" />,
+            <Menu.ItemGroup key="about-section" title={t('About')}>
+              <div className="about-section">
+                {navbarRight.version_string && (
+                  <div css={versionInfoStyles}>
+                    Version: {navbarRight.version_string}
+                  </div>
+                )}
+                {navbarRight.version_sha && (
+                  <div css={versionInfoStyles}>
+                    SHA: {navbarRight.version_sha}
+                  </div>
+                )}
+              </div>
+            </Menu.ItemGroup>,
+          ]}
+        </SubMenu>
+      )}
       {navbarRight.show_language_picker && (
         <LanguagePicker
           locale={navbarRight.locale}
@@ -195,13 +204,9 @@ const RightMenu = ({
         <i className="fa fa-bug" />
       </StyledAnchor>
     )}
-    {navbarRight.user_is_anonymous && (
-      <StyledAnchor href={navbarRight.user_login_url}>
-        <i className="fa fa-fw fa-sign-in" />
-        {t('Login')}
-      </StyledAnchor>
-    )}
   </StyledDiv>
 );
+
+/** */
 
 export default RightMenu;

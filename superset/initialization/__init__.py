@@ -229,7 +229,7 @@ class SupersetAppInitializer:
         appbuilder.add_view(
             DashboardModelView,
             "Dashboards",
-            label=__("Dashboards"),
+            label=__("Tableros de datos"),
             icon="fa-dashboard",
             category="",
             category_icon="",

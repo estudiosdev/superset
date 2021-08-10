@@ -169,7 +169,8 @@ function DashboardList(props: DashboardListProps) {
                 changed_on_delta_humanized,
                 url = '',
               } = json.result;
-              return {
+
+              return props.user.userId ? {
                 ...dashboard,
                 changed_by_name,
                 changed_by_url,
@@ -179,6 +180,11 @@ function DashboardList(props: DashboardListProps) {
                 json_metadata,
                 changed_on_delta_humanized,
                 url,
+              } : {
+                ...dashboard,
+                url,
+                dashboard_title,
+                slug,
               };
             }
             return dashboard;
@@ -252,146 +258,150 @@ function DashboardList(props: DashboardListProps) {
         accessor: 'dashboard_title',
       },
 
-      {
-        Cell: ({
-          row: {
-            original: {
-              changed_by_name: changedByName,
-              changed_by_url: changedByUrl,
+      ...(props.user.userId 
+          ? [
+            {
+              Cell: ({
+                row: {
+                  original: {
+                    changed_by_name: changedByName,
+                    changed_by_url: changedByUrl,
+                  },
+                },
+              }: any) => <a href={changedByUrl}>{changedByName}</a>,
+              Header: t('Modified by'),
+              accessor: 'changed_by.first_name',
+              size: 'xl',
             },
-          },
-        }: any) => <a href={changedByUrl}>{changedByName}</a>,
-        Header: t('Modified by'),
-        accessor: 'changed_by.first_name',
-        size: 'xl',
-      },
-      {
-        Cell: ({
-          row: {
-            original: { status },
-          },
-        }: any) =>
-          status === DashboardStatus.PUBLISHED ? t('Published') : t('Draft'),
-        Header: t('Status'),
-        accessor: 'published',
-        size: 'xl',
-      },
-      {
-        Cell: ({
-          row: {
-            original: { changed_on_delta_humanized: changedOn },
-          },
-        }: any) => <span className="no-wrap">{changedOn}</span>,
-        Header: t('Modified'),
-        accessor: 'changed_on_delta_humanized',
-        size: 'xl',
-      },
-      {
-        Cell: ({
-          row: {
-            original: { created_by: createdBy },
-          },
-        }: any) =>
-          createdBy ? `${createdBy.first_name} ${createdBy.last_name}` : '',
-        Header: t('Created by'),
-        accessor: 'created_by',
-        disableSortBy: true,
-        size: 'xl',
-      },
-      {
-        Cell: ({
-          row: {
-            original: { owners = [] },
-          },
-        }: any) => <FacePile users={owners} />,
-        Header: t('Owners'),
-        accessor: 'owners',
-        disableSortBy: true,
-        size: 'xl',
-      },
-      {
-        Cell: ({ row: { original } }: any) => {
-          const handleDelete = () =>
-            handleDashboardDelete(
-              original,
-              refreshData,
-              addSuccessToast,
-              addDangerToast,
-            );
-          const handleEdit = () => openDashboardEditModal(original);
-          const handleExport = () => handleBulkDashboardExport([original]);
-
-          return (
-            <Actions className="actions">
-              {canDelete && (
-                <ConfirmStatusChange
-                  title={t('Please confirm')}
-                  description={
-                    <>
-                      {t('Are you sure you want to delete')}{' '}
-                      <b>{original.dashboard_title}</b>?
-                    </>
-                  }
-                  onConfirm={handleDelete}
-                >
-                  {confirmDelete => (
-                    <Tooltip
-                      id="delete-action-tooltip"
-                      title={t('Delete')}
-                      placement="bottom"
-                    >
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        className="action-button"
-                        onClick={confirmDelete}
+            {
+              Cell: ({
+                row: {
+                  original: { status },
+                },
+              }: any) =>
+                status === DashboardStatus.PUBLISHED ? t('Published') : t('Draft'),
+              Header: t('Status'),
+              accessor: 'published',
+              size: 'xl',
+            },
+            {
+              Cell: ({
+                row: {
+                  original: { changed_on_delta_humanized: changedOn },
+                },
+              }: any) => <span className="no-wrap">{changedOn}</span>,
+              Header: t('Modified'),
+              accessor: 'changed_on_delta_humanized',
+              size: 'xl',
+            },
+            {
+              Cell: ({
+                row: {
+                  original: { created_by: createdBy },
+                },
+              }: any) =>
+                createdBy ? `${createdBy.first_name} ${createdBy.last_name}` : '',
+              Header: t('Created by'),
+              accessor: 'created_by',
+              disableSortBy: true,
+              size: 'xl',
+            },
+            {
+              Cell: ({
+                row: {
+                  original: { owners = [] },
+                },
+              }: any) => <FacePile users={owners} />,
+              Header: t('Owners'),
+              accessor: 'owners',
+              disableSortBy: true,
+              size: 'xl',
+            },
+            {
+              Cell: ({ row: { original } }: any) => {
+                const handleDelete = () =>
+                  handleDashboardDelete(
+                    original,
+                    refreshData,
+                    addSuccessToast,
+                    addDangerToast,
+                  );
+                const handleEdit = () => openDashboardEditModal(original);
+                const handleExport = () => handleBulkDashboardExport([original]);
+      
+                return (
+                  <Actions className="actions">
+                    {canDelete && (
+                      <ConfirmStatusChange
+                        title={t('Please confirm')}
+                        description={
+                          <>
+                            {t('Are you sure you want to delete')}{' '}
+                            <b>{original.dashboard_title}</b>?
+                          </>
+                        }
+                        onConfirm={handleDelete}
                       >
-                        <Icons.Trash data-test="dashboard-list-trash-icon" />
-                      </span>
-                    </Tooltip>
-                  )}
-                </ConfirmStatusChange>
-              )}
-              {canExport && (
-                <Tooltip
-                  id="export-action-tooltip"
-                  title={t('Export')}
-                  placement="bottom"
-                >
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    className="action-button"
-                    onClick={handleExport}
-                  >
-                    <Icons.Share />
-                  </span>
-                </Tooltip>
-              )}
-              {canEdit && (
-                <Tooltip
-                  id="edit-action-tooltip"
-                  title={t('Edit')}
-                  placement="bottom"
-                >
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    className="action-button"
-                    onClick={handleEdit}
-                  >
-                    <Icons.EditAlt data-test="edit-alt" />
-                  </span>
-                </Tooltip>
-              )}
-            </Actions>
-          );
-        },
-        Header: t('Actions'),
-        id: 'actions',
-        hidden: !canEdit && !canDelete && !canExport,
-        disableSortBy: true,
-      },
+                        {confirmDelete => (
+                          <Tooltip
+                            id="delete-action-tooltip"
+                            title={t('Delete')}
+                            placement="bottom"
+                          >
+                            <span
+                              role="button"
+                              tabIndex={0}
+                              className="action-button"
+                              onClick={confirmDelete}
+                            >
+                              <Icons.Trash data-test="dashboard-list-trash-icon" />
+                            </span>
+                          </Tooltip>
+                        )}
+                      </ConfirmStatusChange>
+                    )}
+                    {canExport && (
+                      <Tooltip
+                        id="export-action-tooltip"
+                        title={t('Export')}
+                        placement="bottom"
+                      >
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          className="action-button"
+                          onClick={handleExport}
+                        >
+                          <Icons.Share />
+                        </span>
+                      </Tooltip>
+                    )}
+                    {canEdit && (
+                      <Tooltip
+                        id="edit-action-tooltip"
+                        title={t('Edit')}
+                        placement="bottom"
+                      >
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          className="action-button"
+                          onClick={handleEdit}
+                        >
+                          <Icons.EditAlt data-test="edit-alt" />
+                        </span>
+                      </Tooltip>
+                    )}
+                  </Actions>
+                );
+              },
+              Header: t('Actions'),
+              id: 'actions',
+              hidden: !canEdit && !canDelete && !canExport,
+              disableSortBy: true,
+            },
+          ]
+          : []),
     ],
     [
       canEdit,
@@ -414,7 +424,7 @@ function DashboardList(props: DashboardListProps) {
     ],
   };
 
-  const filters: Filters = [
+  const loggedUserFilters: Filter[] = [
     {
       Header: t('Owner'),
       id: 'owners',
@@ -468,7 +478,10 @@ function DashboardList(props: DashboardListProps) {
         { label: t('Draft'), value: false },
       ],
     },
-    ...(props.user.userId ? [favoritesFilter] : []),
+  ];
+
+  const filters: Filters = [    
+    ...(props.user.userId ? [...loggedUserFilters, favoritesFilter] : []),
     {
       Header: t('Search'),
       id: 'dashboard_title',
@@ -500,7 +513,8 @@ function DashboardList(props: DashboardListProps) {
 
   function renderCard(dashboard: Dashboard) {
     const { userId } = props.user;
-    const userKey = getFromLocalStorage(String(userId), null);
+    // @ts-ignore
+    const userKey = getFromLocalStorage(userId && userId.toString(), null);
     return (
       <CardStylesOverrides>
         <DashboardCard
@@ -514,6 +528,7 @@ function DashboardList(props: DashboardListProps) {
               : isFeatureEnabled(FeatureFlag.THUMBNAILS)
           }
           loading={loading}
+          userId={userId as number}
           addDangerToast={addDangerToast}
           addSuccessToast={addSuccessToast}
           openDashboardEditModal={openDashboardEditModal}
@@ -526,7 +541,7 @@ function DashboardList(props: DashboardListProps) {
   }
 
   const subMenuButtons: SubMenuProps['buttons'] = [];
-  if (canDelete || canExport) {
+  if ((canDelete || canExport) && !!props.user.userId) {
     subMenuButtons.push({
       name: t('Bulk select'),
       buttonStyle: 'secondary',
@@ -615,11 +630,7 @@ function DashboardList(props: DashboardListProps) {
                 loading={loading}
                 pageSize={PAGE_SIZE}
                 renderCard={renderCard}
-                defaultViewMode={
-                  isFeatureEnabled(FeatureFlag.LISTVIEWS_DEFAULT_CARD_VIEW)
-                    ? 'card'
-                    : 'table'
-                }
+                defaultViewMode="card"
               />
             </>
           );

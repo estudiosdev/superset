@@ -152,7 +152,7 @@ interface CardProps {
   imgURL?: string;
   imgFallbackURL?: string;
   imgPosition?: BackgroundPosition;
-  description: string;
+  description?: string;
   loading?: boolean;
   titleRight?: React.ReactNode;
   coverLeft?: React.ReactNode;

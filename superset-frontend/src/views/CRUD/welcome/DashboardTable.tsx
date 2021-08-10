@@ -200,7 +200,7 @@ function DashboardTable({
             name: (
               <>
                 <i className="fa fa-plus" />
-                Dashboard
+                Tableros de datos
               </>
             ),
             buttonStyle: 'tertiary',

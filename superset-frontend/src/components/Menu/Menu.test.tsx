@@ -63,9 +63,9 @@ const mockedProps = {
         index: 3,
       },
       {
-        name: 'Dashboards',
+        name: 'Tableros de datos',
         icon: 'fa-dashboard',
-        label: 'Dashboards',
+        label: 'Tableros de datos',
         url: '/dashboard/list/',
         index: 4,
       },

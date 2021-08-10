@@ -14,12 +14,12 @@
       "Data": ["Datos"],
       "Datasets": [""],
       "Charts": ["Gráficos"],
-      "Dashboards": ["Dashboards"],
+      "Dashboards": ["Tableros de datos"],
       "Plugins": [""],
       "CSS Templates": ["Plantillas CSS"],
       "Row level security": ["Filtros de seguridad a nivel de linea"],
       "Security": ["Seguridad"],
-      "Import Dashboards": ["Importar Dashboards"],
+      "Import Dashboards": ["Importar tableros de datos"],
       "SQL Editor": ["Editor SQL"],
       "SQL Lab": ["Laboratorio SQL"],
       "Saved Queries": ["Consultas Guardadas"],
@@ -612,7 +612,7 @@
       "New": ["Nuevo"],
       "SQL Query": [""],
       "Chart": ["Gráfico"],
-      "Dashboard": ["Dashboard"],
+      "Dashboard": ["Tablero de datos"],
       "Profile": ["Perfil"],
       "Info": [""],
       "Logout": ["Salir"],
@@ -622,7 +622,7 @@
       "Filter List": ["Filtrar lista"],
       "Search": ["Buscar"],
       "Refresh": ["Intérvalo de actualización"],
-      "Import dashboards": ["Importar dashboards"],
+      "Import dashboards": ["Importar tablero de datos"],
       "Import Dashboard(s)": [""],
       "File": [""],
       "Choose File": [""],
@@ -743,7 +743,7 @@
       "Chart [{}] has been overwritten": [
         "El gráfico  [{}] ha sido sobreescrito"
       ],
-      "dashboard": [""],
+      "dashboard": ["Tablero de datos"],
       "Chart [{}] was added to dashboard [{}]": [
         "El gráfico [{}] ha sido añadido al dashboard [{}]"
       ],
@@ -1363,7 +1363,7 @@
       "Last Updated %s": [""],
       "%s Selected": [""],
       "Deselect all": ["¿Realmente quieres borrar todo?"],
-      "%s-%s of %s": [""],
+      "%s-%s of %s": ["%s-%s de %s"],
       "Settings": ["Configuración"],
       "About": [""],
       "SQL query": ["Parar query"],
@@ -1407,9 +1407,9 @@
       ],
       "Superset dashboard": ["Dashboard Superset"],
       "Check out this dashboard: ": [""],
-      "Refresh dashboard": ["Refrescar el dashboard"],
+      "Refresh dashboard": ["Refrescar el tablero de datos"],
       "Set auto-refresh interval": [
-        "Configurar el intervalo de actualización del dashboard"
+        "Configurar el intervalo de actualización tablero de datos"
       ],
       "Set filter mapping": [""],
       "Edit dashboard properties": ["Editar las propiedades del dashboard"],
@@ -1946,7 +1946,7 @@
       "Notification method": ["Capas de Anotación"],
       "Execution log": ["Registro Acciones"],
       "Actions": ["Acciones"],
-      "Bulk select": [""],
+      "Bulk select": ["Selección múltiple"],
       "No %s yet": [""],
       "Created by": ["Creado por"],
       "An error occurred while fetching created by values: %s": [
@@ -2315,8 +2315,8 @@
        "No hay resultados para esta consulta. Si desea obtener resultados, asegúrese de que los filtros estén configurados correctamente y que la fuente contenga datos para el rango de tiempo seleccionado."
       ],
       "No Results":["Sin resultados"],
-      "Copy dashboard URL": ["Copiar URL del dashboard"],
-      "Share dashboard by email":["Compartir dashboard via email"],
+      "Copy dashboard URL": ["Copiar URL del tablero de datos"],
+      "Share dashboard by email":["Compartir tablero de datos via email"],
       "Enter fullscreen":["Entrar a pantalla completa"],
       "Exit fullscreen":["Salir de pantalla completa"],
       "Sort:": ["Ordenar por:"],
@@ -2324,7 +2324,9 @@
       "Recently modified":["Modificado reciente"],
       "Least recently modified":["No modificado reciente"],
       "Copy chart URL":["Copiar URL del gráfico"],
-      "Share chart by email":["Compartir gráfico via email"]
+      "Share chart by email":["Compartir gráfico via email"],
+      "Dashboard Superset":["Tablero de datos"]
+     
     }
   }
 }

@@ -136,6 +136,30 @@ function DashboardCard({
       )}
     </Menu>
   );
+  
+  const loggedUserProps = {
+    description: t('Modified %s', dashboard.changed_on_delta_humanized),
+    actions: (
+      <ListViewCard.Actions
+        onClick={e => {
+          e.stopPropagation();
+          e.preventDefault();
+        }}
+      >
+        <FaveStar
+          itemId={dashboard.id}
+          saveFaveStar={saveFavoriteStatus}
+          isStarred={favoriteStatus}
+        />
+        <Dropdown overlay={menu}>
+          <Icons.MoreVert iconColor={theme.colors.grayscale.base} />
+        </Dropdown>
+      </ListViewCard.Actions>
+    ),
+    titleRight: (
+      <Label>{dashboard.published ? t('published') : t('draft')}</Label>
+    )
+  };
   return (
     <CardStyles
       onClick={() => {
@@ -147,9 +171,6 @@ function DashboardCard({
       <ListViewCard
         loading={dashboard.loading || false}
         title={dashboard.dashboard_title}
-        titleRight={
-          <Label>{dashboard.published ? t('published') : t('draft')}</Label>
-        }
         cover={
           !isFeatureEnabled(FeatureFlag.THUMBNAILS) || !showThumbnails ? (
             <></>
@@ -159,25 +180,8 @@ function DashboardCard({
         linkComponent={Link}
         imgURL={dashboard.thumbnail_url}
         imgFallbackURL="/static/assets/images/dashboard-card-fallback.svg"
-        description={t('Modified %s', dashboard.changed_on_delta_humanized)}
         coverLeft={<FacePile users={dashboard.owners || []} />}
-        actions={
-          <ListViewCard.Actions
-            onClick={e => {
-              e.stopPropagation();
-              e.preventDefault();
-            }}
-          >
-            <FaveStar
-              itemId={dashboard.id}
-              saveFaveStar={saveFavoriteStatus}
-              isStarred={favoriteStatus}
-            />
-            <Dropdown overlay={menu}>
-              <Icons.MoreVert iconColor={theme.colors.grayscale.base} />
-            </Dropdown>
-          </ListViewCard.Actions>
-        }
+        {...(!!userId ? loggedUserProps : {})}
       />
     </CardStyles>
   );
