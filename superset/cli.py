@@ -133,9 +133,8 @@ def load_examples_run(
     print("Loading [Birth names]")
     examples.load_birth_names(only_metadata, force)
 
-    if load_test_data:
-        print("Loading [Tabbed dashboard]")
-        examples.load_tabbed_dashboard(only_metadata)
+    print("Loading [Tabbed dashboard]")
+    examples.load_tabbed_dashboard(only_metadata)
 
     if not load_test_data:
         print("Loading [Random time series data]")

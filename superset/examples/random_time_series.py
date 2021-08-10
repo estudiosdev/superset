@@ -72,7 +72,7 @@ def load_random_time_series_data(
     tbl = obj
 
     slice_data = {
-        "granularity_sqla": "ds",
+        "granularity_sqla": "day",
         "row_limit": app.config["ROW_LIMIT"],
         "since": "2019-01-01",
         "until": "2019-02-01",

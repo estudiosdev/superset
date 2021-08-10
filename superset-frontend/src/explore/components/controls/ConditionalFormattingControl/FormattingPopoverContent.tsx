@@ -44,7 +44,6 @@ const colorSchemeOptions = [
 ];
 
 const operatorOptions = [
-  { value: COMPARATOR.NONE, label: 'None' },
   { value: COMPARATOR.GREATER_THAN, label: '>' },
   { value: COMPARATOR.LESS_THAN, label: '<' },
   { value: COMPARATOR.GREATER_OR_EQUAL, label: '≥' },
@@ -68,9 +67,6 @@ export const FormattingPopoverContent = ({
 }) => {
   const isOperatorMultiValue = (operator?: COMPARATOR) =>
     operator && MULTIPLE_VALUE_COMPARATORS.includes(operator);
-
-  const isOperatorNone = (operator?: COMPARATOR) =>
-    !operator || operator === COMPARATOR.NONE;
 
   const operatorField = useMemo(
     () => (
@@ -150,18 +146,12 @@ export const FormattingPopoverContent = ({
           prevValues: ConditionalFormattingConfig,
           currentValues: ConditionalFormattingConfig,
         ) =>
-          isOperatorNone(prevValues.operator) !==
-            isOperatorNone(currentValues.operator) ||
           isOperatorMultiValue(prevValues.operator) !==
-            isOperatorMultiValue(currentValues.operator)
+          isOperatorMultiValue(currentValues.operator)
         }
       >
         {({ getFieldValue }) =>
-          isOperatorNone(getFieldValue('operator')) ? (
-            <Row gutter={12}>
-              <Col span={6}>{operatorField}</Col>
-            </Row>
-          ) : isOperatorMultiValue(getFieldValue('operator')) ? (
+          isOperatorMultiValue(getFieldValue('operator')) ? (
             <Row gutter={12}>
               <Col span={9}>
                 <FormItem

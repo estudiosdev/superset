@@ -17,7 +17,7 @@
  * under the License.
  */
 import React, { RefObject } from 'react';
-import { Select } from 'src/components';
+import Select from 'src/components/Select';
 import { t, styled } from '@superset-ui/core';
 import Alert from 'src/components/Alert';
 import Button from 'src/components/Button';
@@ -36,7 +36,7 @@ export const options = [
   [21600, t('6 hours')],
   [43200, t('12 hours')],
   [86400, t('24 hours')],
-].map(o => ({ value: o[0] as number, label: o[1] }));
+].map(o => ({ value: o[0], label: o[1] }));
 
 const StyledModalTrigger = styled(ModalTrigger)`
   .ant-modal-body {
@@ -95,9 +95,10 @@ class RefreshIntervalModal extends React.PureComponent<
     this.modalRef.current?.close();
   }
 
-  handleFrequencyChange(value: number) {
+  handleFrequencyChange(opt: Record<string, any>) {
+    const value = opt ? opt.value : options[0].value;
     this.setState({
-      refreshFrequency: value || options[0].value,
+      refreshFrequency: value,
     });
   }
 
@@ -116,10 +117,10 @@ class RefreshIntervalModal extends React.PureComponent<
           <div>
             <FormLabel>{t('Refresh frequency')}</FormLabel>
             <Select
-              ariaLabel={t('Refresh interval')}
               options={options}
-              value={refreshFrequency}
+              value={{ value: refreshFrequency }}
               onChange={this.handleFrequencyChange}
+              forceOverflow
             />
             {showRefreshWarning && (
               <RefreshWarningContainer>

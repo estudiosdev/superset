@@ -17,7 +17,7 @@
  * under the License.
  */
 import React from 'react';
-import { render, screen, waitFor } from 'spec/helpers/testing-library';
+import { render, screen } from 'spec/helpers/testing-library';
 import { CssEditor as AceCssEditor } from 'src/components/AsyncAceEditor';
 import { AceEditorProps } from 'react-ace';
 import userEvent from '@testing-library/user-event';
@@ -31,12 +31,6 @@ jest.mock('src/components/AsyncAceEditor', () => ({
     />
   ),
 }));
-
-const templates = [
-  { label: 'Template A', css: 'background-color: red;' },
-  { label: 'Template B', css: 'background-color: blue;' },
-  { label: 'Template C', css: 'background-color: yellow;' },
-];
 
 AceCssEditor.preload = () => new Promise(() => {});
 
@@ -52,15 +46,14 @@ test('renders with initial CSS', () => {
   expect(screen.getByText(initialCss)).toBeInTheDocument();
 });
 
-test('renders with templates', async () => {
+test('renders with templates', () => {
+  const templates = ['Template A', 'Template B', 'Template C'];
   render(<CssEditor triggerNode={<>Click</>} templates={templates} />);
   userEvent.click(screen.getByRole('button', { name: 'Click' }));
-  userEvent.hover(screen.getByText('Load a CSS template'));
-  await waitFor(() => {
-    templates.forEach(template =>
-      expect(screen.getByText(template.label)).toBeInTheDocument(),
-    );
-  });
+  userEvent.click(screen.getByText('Load a CSS template'));
+  templates.forEach(template =>
+    expect(screen.getByText(template)).toBeInTheDocument(),
+  );
 });
 
 test('triggers onChange when using the editor', () => {
@@ -80,8 +73,9 @@ test('triggers onChange when using the editor', () => {
   expect(onChange).toHaveBeenLastCalledWith(initialCss.concat(additionalCss));
 });
 
-test('triggers onChange when selecting a template', async () => {
+test('triggers onChange when selecting a template', () => {
   const onChange = jest.fn();
+  const templates = ['Template A', 'Template B', 'Template C'];
   render(
     <CssEditor
       triggerNode={<>Click</>}
@@ -92,6 +86,6 @@ test('triggers onChange when selecting a template', async () => {
   userEvent.click(screen.getByRole('button', { name: 'Click' }));
   userEvent.click(screen.getByText('Load a CSS template'));
   expect(onChange).not.toHaveBeenCalled();
-  userEvent.click(await screen.findByText('Template A'));
+  userEvent.click(screen.getByText('Template A'));
   expect(onChange).toHaveBeenCalledTimes(1);
 });

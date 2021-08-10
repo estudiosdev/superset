@@ -91,7 +91,6 @@ const StyledHeader = styled.div`
   }
 
   .action-button {
-    color: ${({ theme }) => theme.colors.grayscale.base};
     margin: 0 ${({ theme }) => theme.gridUnit * 1.5}px 0
       ${({ theme }) => theme.gridUnit}px;
   }

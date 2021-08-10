@@ -133,8 +133,7 @@ const TableElement = ({ table, actions, ...props }: TableElementProps) => {
       ));
     }
 
-    if (!partitions && (!metadata || !metadata.length)) {
-      // hide partition and metadata card view
+    if (!partitions && !metadata) {
       return null;
     }
 

@@ -22,7 +22,7 @@ import { Row, Col, Input } from 'src/common/components';
 import { Form, FormItem } from 'src/components/Form';
 import jsonStringify from 'json-stringify-pretty-compact';
 import Button from 'src/components/Button';
-import { Select } from 'src/components';
+import { AsyncSelect } from 'src/components/Select';
 import rison from 'rison';
 import {
   styled,
@@ -91,22 +91,17 @@ const loadAccessOptions = accessType => (input = '') => {
   return SupersetClient.get({
     endpoint: `/api/v1/dashboard/related/${accessType}?q=${query}`,
   }).then(
-    response => ({
-      data: response.json.result.map(item => ({
+    response =>
+      response.json.result.map(item => ({
         value: item.value,
         label: item.text,
       })),
-      totalCount: response.json.count,
-    }),
     badResponse => {
       handleErrorResponse(badResponse);
       return [];
     },
   );
 };
-
-const loadOwners = loadAccessOptions('owners');
-const loadRoles = loadAccessOptions('roles');
 
 class PropertiesModal extends React.PureComponent {
   constructor(props) {
@@ -331,15 +326,16 @@ class PropertiesModal extends React.PureComponent {
         <Col xs={24} md={12}>
           <h3 style={{ marginTop: '1em' }}>{t('Access')}</h3>
           <FormItem label={t('Owners')}>
-            <Select
-              allowClear
-              ariaLabel={t('Owners')}
-              disabled={!isDashboardLoaded}
+            <AsyncSelect
               name="owners"
-              mode="multiple"
+              isMulti
               value={values.owners}
-              options={loadOwners}
+              loadOptions={loadAccessOptions('owners')}
+              defaultOptions // load options on render
+              cacheOptions
               onChange={this.onOwnersChange}
+              disabled={!isDashboardLoaded}
+              filterOption={null} // options are filtered at the api
             />
             <p className="help-block">
               {t(
@@ -372,15 +368,16 @@ class PropertiesModal extends React.PureComponent {
         <Row gutter={16}>
           <Col xs={24} md={12}>
             <FormItem label={t('Owners')}>
-              <Select
-                allowClear
-                ariaLabel={t('Owners')}
-                disabled={!isDashboardLoaded}
+              <AsyncSelect
                 name="owners"
-                mode="multiple"
+                isMulti
                 value={values.owners}
-                options={loadOwners}
+                loadOptions={loadAccessOptions('owners')}
+                defaultOptions // load options on render
+                cacheOptions
                 onChange={this.onOwnersChange}
+                disabled={!isDashboardLoaded}
+                filterOption={null} // options are filtered at the api
               />
               <p className="help-block">
                 {t(
@@ -391,15 +388,16 @@ class PropertiesModal extends React.PureComponent {
           </Col>
           <Col xs={24} md={12}>
             <FormItem label={t('Roles')}>
-              <Select
-                allowClear
-                ariaLabel={t('Roles')}
-                disabled={!isDashboardLoaded}
+              <AsyncSelect
                 name="roles"
-                mode="multiple"
+                isMulti
                 value={values.roles}
-                options={loadRoles}
+                loadOptions={loadAccessOptions('roles')}
+                defaultOptions // load options on render
+                cacheOptions
                 onChange={this.onRolesChange}
+                disabled={!isDashboardLoaded}
+                filterOption={null} // options are filtered at the api
               />
               <p className="help-block">
                 {t(

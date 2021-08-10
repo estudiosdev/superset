@@ -217,7 +217,7 @@ const Select = ({
   const handleTopOptions = useCallback(
     (selectedValue: AntdSelectValue | undefined) => {
       // bringing selected options to the top of the list
-      if (selectedValue !== undefined && selectedValue !== null) {
+      if (selectedValue) {
         const topOptions: OptionsType = [];
         const otherOptions: OptionsType = [];
 
