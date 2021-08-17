@@ -720,4 +720,4 @@ class SupersetAppInitializer:
 class SupersetIndexView(IndexView):
     @expose("/")
     def index(self) -> FlaskResponse:
-        return redirect("/dashboard/list/")
+        return redirect("/dashboard/list/") 
