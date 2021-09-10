@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-x-superset-image: &superset-image apache/superset:latest-dev
+x-superset-image: &superset-image superset_local:latest
 x-superset-depends-on: &superset-depends-on
   - db
   - redis
@@ -37,6 +37,8 @@ services:
     image: postgres:13
     container_name: superset_db
     restart: unless-stopped
+    ports:
+      - 5432:5432
     volumes:
       - db_home:/var/lib/postgresql/data
 
