@@ -635,7 +635,7 @@ class ChartRestApi(BaseSupersetModelRestApi):
         return self.get_data_response(command, form_data=form_data)
 
     @expose("/data", methods=["POST"])
-    @protect()
+    # @protect()
     @statsd_metrics
     @event_logger.log_this_with_context(
         action=lambda self, *args, **kwargs: f"{self.__class__.__name__}.data",
