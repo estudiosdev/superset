@@ -25,7 +25,6 @@ import {
   createFetchRelated,
   createErrorHandler,
   handleDashboardDelete,
-  CardStylesOverrides,
 } from 'src/views/CRUD/utils';
 import { useListViewResource, useFavoriteStatus } from 'src/views/CRUD/hooks';
 import ConfirmStatusChange from 'src/components/ConfirmStatusChange';
@@ -47,6 +46,7 @@ import FaveStar from 'src/components/FaveStar';
 import PropertiesModal from 'src/dashboard/components/PropertiesModal';
 import { Tooltip } from 'src/components/Tooltip';
 import ImportModelsModal from 'src/components/ImportModal/index';
+import OmniContainer from 'src/components/OmniContainer';
 
 import Dashboard from 'src/dashboard/containers/Dashboard';
 import DashboardCard from './DashboardCard';
@@ -139,6 +139,9 @@ function DashboardList(props: DashboardListProps) {
     showImportModal(false);
     refreshData();
   };
+
+  const { userId } = props.user;
+  const userKey = getFromLocalStorage(userId.toString(), null);
 
   const canCreate = hasPerm('can_write');
   const canEdit = hasPerm('can_write');
@@ -516,27 +519,24 @@ function DashboardList(props: DashboardListProps) {
     // @ts-ignore
     const userKey = getFromLocalStorage(userId && userId.toString(), null);
     return (
-      <CardStylesOverrides>
-        <DashboardCard
-          dashboard={dashboard}
-          hasPerm={hasPerm}
-          bulkSelectEnabled={bulkSelectEnabled}
-          refreshData={refreshData}
-          showThumbnails={
-            userKey
-              ? userKey.thumbnails
-              : isFeatureEnabled(FeatureFlag.THUMBNAILS)
-          }
-          loading={loading}
-          userId={userId as number}
-          addDangerToast={addDangerToast}
-          addSuccessToast={addSuccessToast}
-          openDashboardEditModal={openDashboardEditModal}
-          saveFavoriteStatus={saveFavoriteStatus}
-          favoriteStatus={favoriteStatus[dashboard.id]}
-          handleBulkDashboardExport={handleBulkDashboardExport}
-        />
-      </CardStylesOverrides>
+      <DashboardCard
+        dashboard={dashboard}
+        hasPerm={hasPerm}
+        bulkSelectEnabled={bulkSelectEnabled}
+        refreshData={refreshData}
+        showThumbnails={
+          userKey
+            ? userKey.thumbnails
+            : isFeatureEnabled(FeatureFlag.THUMBNAILS)
+        }
+        loading={loading}
+        addDangerToast={addDangerToast}
+        addSuccessToast={addSuccessToast}
+        openDashboardEditModal={openDashboardEditModal}
+        saveFavoriteStatus={saveFavoriteStatus}
+        favoriteStatus={favoriteStatus[dashboard.id]}
+        handleBulkDashboardExport={handleBulkDashboardExport}
+      />
     );
   }
 
@@ -629,6 +629,11 @@ function DashboardList(props: DashboardListProps) {
                 initialSort={initialSort}
                 loading={loading}
                 pageSize={PAGE_SIZE}
+                showThumbnails={
+                  userKey
+                    ? userKey.thumbnails
+                    : isFeatureEnabled(FeatureFlag.THUMBNAILS)
+                }
                 renderCard={renderCard}
                 defaultViewMode="card"
               />
@@ -650,6 +655,9 @@ function DashboardList(props: DashboardListProps) {
         passwordFields={passwordFields}
         setPasswordFields={setPasswordFields}
       />
+
+      <OmniContainer />
+
       {preparingExport && <Loading />}
     </>
   );
