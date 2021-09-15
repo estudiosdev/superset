@@ -517,7 +517,7 @@ function DashboardList(props: DashboardListProps) {
   function renderCard(dashboard: Dashboard) {
     const { userId } = props.user;
     // @ts-ignore
-    const userKey = getFromLocalStorage(userId && userId.toString(), null);
+    const userKey = getFromLocalStorage(userId?.toString(), null);
     return (
       <DashboardCard
         dashboard={dashboard}
