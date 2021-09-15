@@ -170,7 +170,7 @@ class Header extends React.PureComponent {
   componentDidMount() {
     const { refreshFrequency, user, dashboardInfo } = this.props;
     this.startPeriodicRender(refreshFrequency * 1000);
-    if (user?.userId && this.canAddReports()) {
+    if (this.canAddReports()) {
       // this is in case there is an anonymous user.
       this.props.fetchUISpecificReport(
         user.userId,
@@ -428,7 +428,7 @@ class Header extends React.PureComponent {
       return false;
     }
     const { user } = this.props;
-    if (!user) {
+    if (!user || !user?.userId) {
       // this is in the case that there is an anonymous user.
       return false;
     }
@@ -620,7 +620,7 @@ class Header extends React.PureComponent {
             />
           )}
 
-          {this.state.showingReportModal && (
+          {this.state.showingReportModal && !!user?.userId && (
             <ReportModal
               show={this.state.showingReportModal}
               onHide={this.hideReportModal}
