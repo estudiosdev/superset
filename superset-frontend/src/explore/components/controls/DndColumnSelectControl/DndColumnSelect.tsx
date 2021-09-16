@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { tn } from '@superset-ui/core';
 import { ColumnMeta } from '@superset-ui/chart-controls';
 import { isEmpty } from 'lodash';
@@ -27,6 +27,7 @@ import { OptionSelector } from 'src/explore/components/controls/DndColumnSelectC
 import { DatasourcePanelDndItem } from 'src/explore/components/DatasourcePanel/types';
 import { DndItemType } from 'src/explore/components/DndItemType';
 import { StyledColumnOption } from 'src/explore/components/optionRenderers';
+import { useComponentDidUpdate } from 'src/common/hooks/useComponentDidUpdate';
 
 export const DndColumnSelect = (props: LabelProps) => {
   const {
@@ -45,7 +46,7 @@ export const DndColumnSelect = (props: LabelProps) => {
   );
 
   // synchronize values in case of dataset changes
-  useEffect(() => {
+  const handleOptionsChange = useCallback(() => {
     const optionSelectorValues = optionSelector.getValues();
     if (typeof value !== typeof optionSelectorValues) {
       onChange(optionSelectorValues);
@@ -65,8 +66,11 @@ export const DndColumnSelect = (props: LabelProps) => {
     ) {
       onChange(optionSelectorValues);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(value), JSON.stringify(optionSelector.getValues())]);
+
+  // useComponentDidUpdate to avoid running this for the first render, to avoid
+  // calling onChange when the initial value is not valid for the dataset
+  useComponentDidUpdate(handleOptionsChange);
 
   const onDrop = useCallback(
     (item: DatasourcePanelDndItem) => {
@@ -139,7 +143,8 @@ export const DndColumnSelect = (props: LabelProps) => {
       accept={DndItemType.Column}
       displayGhostButton={multi || optionSelector.values.length === 0}
       ghostButtonText={
-        ghostButtonText || tn('Drop column', 'Drop columns', multi ? 2 : 1)
+        ghostButtonText ||
+        tn('Drop column here', 'Drop columns here', multi ? 2 : 1)
       }
       {...props}
     />

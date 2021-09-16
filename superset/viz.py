@@ -74,7 +74,7 @@ from superset.utils.core import (
     JS_MAX_INTEGER,
     merge_extra_filters,
     QueryMode,
-    to_adhoc,
+    simple_filter_to_adhoc,
 )
 from superset.utils.date_parser import get_since_until, parse_past_timedelta
 from superset.utils.dates import datetime_to_epoch
@@ -449,7 +449,8 @@ class BaseViz:
 
         payload = self.get_df_payload(query_obj)
 
-        df = payload.get("df")
+        # if payload does not have a df, we are raising an error here.
+        df = cast(Optional[pd.DataFrame], payload["df"])
 
         if self.status != utils.QueryStatus.FAILED:
             payload["data"] = self.get_data(df)
@@ -481,7 +482,8 @@ class BaseViz:
             for col in filter_columns
             if col not in columns and col not in filter_values_columns
         ] + rejected_time_columns
-
+        if df is not None:
+            payload["colnames"] = list(df.columns)
         return payload
 
     def get_df_payload(
@@ -2475,7 +2477,9 @@ class BaseDeckGLViz(BaseViz):
             spatial_columns.add(line_column)
 
         for column in sorted(spatial_columns):
-            filter_ = to_adhoc({"col": column, "op": "IS NOT NULL", "val": ""})
+            filter_ = simple_filter_to_adhoc(
+                {"col": column, "op": "IS NOT NULL", "val": ""}
+            )
             fd["adhoc_filters"].append(filter_)
 
     def query_obj(self) -> QueryObjectDict:
