@@ -293,7 +293,7 @@ PUBLIC_ROLE_LIKE: Optional[str] = None
 # Babel config for translations
 # ---------------------------------------------------
 # Setup default language
-BABEL_DEFAULT_LOCALE = "es"
+BABEL_DEFAULT_LOCALE = "en"
 # Your application default translation path
 BABEL_DEFAULT_FOLDER = "superset/translations"
 # The allowed translation for you app
@@ -549,7 +549,7 @@ ALLOWED_EXTENSIONS = {*EXCEL_EXTENSIONS, *CSV_EXTENSIONS}
 # CSV Options: key/value pairs that will be passed as argument to DataFrame.to_csv
 # method.
 # note: index option should not be overridden
-CSV_EXPORT = {"encoding": "utf_8_sig"}
+CSV_EXPORT = {"encoding": "utf-8"}
 
 # ---------------------------------------------------
 # Time grain configurations
@@ -1236,52 +1236,6 @@ MENU_HIDE_USER_INFO = False
 SQLALCHEMY_DOCS_URL = "https://docs.sqlalchemy.org/en/13/core/engines.html"
 SQLALCHEMY_DISPLAY_TEXT = "SQLAlchemy docs"
 
-
-
-# Setup default language
-BABEL_DEFAULT_LOCALE = "es"
-# Your application default translation path
-BABEL_DEFAULT_FOLDER = "superset/translations"
-# The allowed translation for you app
-LANGUAGES = {
-    "es": {"flag": "es", "name": "Spanish"},
-}
-
-# Specify the App icon
-APP_ICON = "/static/assets/images/sb_logo.png"
-APP_ICON_WIDTH = 70
-
-# Specify where clicking the logo would take the user
-# e.g. setting it to '/' would take the user to '/superset/welcome/'
-LOGO_TARGET_PATH = '/dashboard/list/'
-
-
-
-# Multiple favicons can be specified here. The "href" property
-# is mandatory, but "sizes," "type," and "rel" are optional.
-# For example:
-# {
-#     "href":path/to/image.png",
-#     "sizes": "16x16",
-#     "type": "image/png"
-#     "rel": "icon"
-# },
-FAVICONS = [{"href": "/static/assets/images/sb_favicon.ico"}]
-
-
-
-# Uncomment to setup Your App name
-APP_NAME = "Estadísticas | Superintendencia de Bancos"
-
-# WTF_CSRF_ENABLED = False
-SESSION_COOKIE_SAMESITE = "None"
-# WTF_CSRF_EXEMPT_LIST = []
-SESSION_COOKIE_SECURE = True
-# ENABLE_CORS = False
-
-# CSV_EXPORT = {"encoding": "utf_8_sig"}
-
-
 # -------------------------------------------------------------------
 # *                WARNING:  STOP EDITING  HERE                    *
 # -------------------------------------------------------------------
@@ -1313,26 +1267,3 @@ elif importlib.util.find_spec("superset_config") and not is_test():
     except Exception:
         logger.exception("Found but failed to import local superset_config")
         raise
-
-#############################################################################
-###################################ESTUDIOS############################################
-######################################################################################
-
-
-
-# Multiple favicons can be specified here. The "href" property
-# is mandatory, but "sizes," "type," and "rel" are optional.
-# For example:
-# {
-#     "href":path/to/image.png",
-#     "sizes": "16x16",
-#     "type": "image/png"
-#     "rel": "icon"
-# },
-FAVICONS = [{"href": "/static/assets/images/sb_favicon.ico"}]
-
-
-
-# Uncomment to setup Your App name
-APP_NAME = "Estadísticas | Superintendencia de Bancos"
-
