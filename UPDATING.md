@@ -22,15 +22,6 @@ under the License.
 This file documents any backwards-incompatible changes in Superset and
 assists people when migrating to a new version.
 
-<<<<<<< HEAD
-## 1.3.0
-
-### Breaking Changes
-
-- [15909](https://github.com/apache/incubator-superset/pull/15909): a change which
-drops a uniqueness criterion (which may or may not have existed) to the tables table. This constraint was obsolete as it is handled by the ORM due to differences in how MySQL, PostgreSQL, etc. handle uniqueness for NULL values.
-
-=======
 ## 1.3.1
 
 ### Breaking Changes
@@ -44,7 +35,6 @@ drops a uniqueness criterion (which may or may not have existed) to the tables t
 - [15909](https://github.com/apache/incubator-superset/pull/15909): a change which
 drops a uniqueness criterion (which may or may not have existed) to the tables table. This constraint was obsolete as it is handled by the ORM due to differences in how MySQL, PostgreSQL, etc. handle uniqueness for NULL values.
 
->>>>>>> 1.3.1
 ### Potential Downtime
 - [14234](https://github.com/apache/superset/pull/14234): Adds the `limiting_factor` column to the `query` table. Give the migration includes a DDL operation on a heavily trafficed table, potential service downtime may be required.
 

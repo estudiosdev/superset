@@ -229,46 +229,6 @@ def pivot_table_v2(  # pylint: disable=too-many-branches
         apply_metrics_on_rows=form_data.get("metricsLayout") == "ROWS",
     )
 
-<<<<<<< HEAD
-    # The pandas `pivot_table` method either brings both row/column
-    # totals, or none at all. We pass `margin=True` to get both, and
-    # remove any dimension that was not requests.
-    if not form_data.get("rowTotals"):
-        df.drop(df.columns[len(df.columns) - 1], axis=1, inplace=True)
-    if not form_data.get("colTotals"):
-        df = df[:-1]
-
-    # Compute fractions, if needed. If `colTotals` or `rowTotals` are
-    # present we need to adjust for including them in the sum
-    if aggregate_function.endswith(" as Fraction of Total"):
-        total = df.sum().sum()
-        df = df.astype(total.dtypes) / total
-        if form_data.get("colTotals"):
-            df *= 2
-        if form_data.get("rowTotals"):
-            df *= 2
-    elif aggregate_function.endswith(" as Fraction of Columns"):
-        total = df.sum(axis=0)
-        df = df.astype(total.dtypes).div(total, axis=1)
-        if form_data.get("colTotals"):
-            df *= 2
-    elif aggregate_function.endswith(" as Fraction of Rows"):
-        total = df.sum(axis=1)
-        df = df.astype(total.dtypes).div(total, axis=0)
-        if form_data.get("rowTotals"):
-            df *= 2
-
-    # Re-order the columns adhering to the metric ordering.
-    df = df[metrics]
-
-    # Display metrics side by side with each column
-    if form_data.get("combineMetric"):
-        df = df.stack(0).unstack().reindex(level=-1, columns=metrics)
-
-    # flatten column names
-    df.columns = [" ".join(str(name) for name in column) for column in df.columns]
-=======
->>>>>>> 1.3.1
 
 def pivot_table(df: pd.DataFrame, form_data: Dict[str, Any]) -> pd.DataFrame:
     """
