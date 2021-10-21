@@ -30,6 +30,10 @@ from superset.dao.exceptions import (
 )
 from superset.extensions import db
 
+import pymssql
+
+pymssql.Binary = bytearray
+
 
 class BaseDAO:
     """

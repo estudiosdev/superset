@@ -205,7 +205,7 @@ class ReportScheduleDAO(BaseDAO):
         """
         session = session or db.session
         return (
-            session.query(ReportSchedule).filter(ReportSchedule.active.is_(True)).all()
+            session.query(ReportSchedule).filter(ReportSchedule.active == 1).all()
         )
 
     @staticmethod
