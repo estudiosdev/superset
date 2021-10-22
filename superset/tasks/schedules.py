@@ -791,7 +791,7 @@ def schedule_window(
     if not model_cls:
         return None
 
-    schedules = session.query(model_cls).filter(model_cls.active.is_(True))
+    schedules = session.query(model_cls).filter(model_cls.active == 1)
 
     for schedule in schedules:
         logging.info("Processing schedule %s", schedule)

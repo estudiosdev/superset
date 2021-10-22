@@ -86,7 +86,7 @@ class DashboardAccessFilter(BaseFilter):
             .join(Dashboard.slices)
             .filter(
                 and_(
-                    Dashboard.published.is_(True),
+                    Dashboard.published == 1,
                     *is_rbac_disabled_filter,
                     or_(
                         Slice.perm.in_(datasource_perms),
@@ -119,7 +119,7 @@ class DashboardAccessFilter(BaseFilter):
                 .join(Dashboard.roles)
                 .filter(
                     and_(
-                        Dashboard.published.is_(True),
+                        Dashboard.published == 1,
                         dashboard_has_roles,
                         Role.id.in_([x.id for x in get_user_roles()]),
                     ),
