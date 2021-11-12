@@ -27,6 +27,8 @@ from superset.models.core import Database
 from superset.models.dashboard import Dashboard
 from superset.models.slice import Slice
 from superset.views.base import DatasourceFilter
+from sqlalchemy.sql.expression import literal
+
 
 logger = logging.getLogger(__name__)
 
