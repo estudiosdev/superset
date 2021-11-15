@@ -575,9 +575,13 @@ class BaseSupersetModelRestApi(ModelRestApi):
         # Apply generic base filters with added request filter
         query = self.datamodel.apply_filters(query, filters)
         # Apply sort
-        query = self.datamodel.apply_order_by(query, column_name, "asc")
+        # query = self.datamodel.apply_order_by(query, column_name, "asc")
+        result = self.datamodel.apply_order_by(query, column_name, "asc").all()
         # Apply pagination
-        result = self.datamodel.apply_pagination(query, page, page_size).all()
+        def local_paginate(page, page_size):
+            return result[page * page_size: page * page_size + page_size]
+        # result = self.datamodel.apply_pagination(query, page, page_size).all()
+        result = local_paginate(page, page_size)
         # produce response
         result = [
             {"text": item[0], "value": item[0]}
