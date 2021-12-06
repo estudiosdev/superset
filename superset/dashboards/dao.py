@@ -20,6 +20,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.sql.expression import literal
 
 from superset import security_manager
 from superset.dao.base import BaseDAO
@@ -130,16 +131,22 @@ class DashboardDAO(BaseDAO):
     def validate_slug_uniqueness(slug: str) -> bool:
         if not slug:
             return True
-        dashboard_query = db.session.query(Dashboard).filter(Dashboard.slug == slug)
-        return not db.session.query(dashboard_query.exists()).scalar()
+        does_exists = db.session.query(literal(True)).filter(
+            db.session.query(Dashboard).filter(
+                Dashboard.slug == slug
+            ).exists()
+        ).scalar()
+        return not does_exists
 
     @staticmethod
     def validate_update_slug_uniqueness(dashboard_id: int, slug: Optional[str]) -> bool:
         if slug is not None:
-            dashboard_query = db.session.query(Dashboard).filter(
-                Dashboard.slug == slug, Dashboard.id != dashboard_id
-            )
-            return not db.session.query(dashboard_query.exists()).scalar()
+            does_exists = db.session.query(literal(True)).filter(
+                db.session.query(Dashboard).filter(
+                    Dashboard.slug == slug, Dashboard.id != dashboard_id
+                ).exists()
+            ).scalar()
+            return not does_exists
         return True
 
     @staticmethod
