@@ -612,8 +612,6 @@ describe('async actions', () => {
     });
 
     describe('queryEditorSetSql', () => {
-<<<<<<< HEAD:superset-frontend/spec/javascripts/sqllab/actions/sqlLab_spec.js
-=======
       const sql = 'SELECT * ';
       const expectedActions = [
         {
@@ -622,54 +620,20 @@ describe('async actions', () => {
           sql,
         },
       ];
->>>>>>> 1.4.1:superset-frontend/src/SqlLab/actions/sqlLab.test.js
       describe('with backend persistence flag on', () => {
         it('updates the tab state in the backend', () => {
           expect.assertions(2);
 
-<<<<<<< HEAD:superset-frontend/spec/javascripts/sqllab/actions/sqlLab_spec.js
-          const sql = 'SELECT * ';
-=======
->>>>>>> 1.4.1:superset-frontend/src/SqlLab/actions/sqlLab.test.js
           const store = mockStore({});
 
           return store
             .dispatch(actions.queryEditorSetSql(queryEditor, sql))
             .then(() => {
-<<<<<<< HEAD:superset-frontend/spec/javascripts/sqllab/actions/sqlLab_spec.js
-              expect(store.getActions()).toHaveLength(0);
-=======
               expect(store.getActions()).toEqual(expectedActions);
->>>>>>> 1.4.1:superset-frontend/src/SqlLab/actions/sqlLab.test.js
               expect(fetchMock.calls(updateTabStateEndpoint)).toHaveLength(1);
             });
         });
       });
-<<<<<<< HEAD:superset-frontend/spec/javascripts/sqllab/actions/sqlLab_spec.js
-    });
-    describe('with backend persistence flag off', () => {
-      it('does not update the tab state in the backend', () => {
-        const backendPersistenceOffMock = jest
-          .spyOn(featureFlags, 'isFeatureEnabled')
-          .mockImplementation(
-            feature => !(feature === 'SQLLAB_BACKEND_PERSISTENCE'),
-          );
-        const sql = 'SELECT * ';
-        const store = mockStore({});
-        const expectedActions = [
-          {
-            type: actions.QUERY_EDITOR_SET_SQL,
-            queryEditor,
-            sql,
-          },
-        ];
-
-        store.dispatch(actions.queryEditorSetSql(queryEditor, sql));
-
-        expect(store.getActions()).toEqual(expectedActions);
-        expect(fetchMock.calls(updateTabStateEndpoint)).toHaveLength(0);
-        backendPersistenceOffMock.mockRestore();
-=======
       describe('with backend persistence flag off', () => {
         it('does not update the tab state in the backend', () => {
           const backendPersistenceOffMock = jest
@@ -686,7 +650,6 @@ describe('async actions', () => {
           expect(fetchMock.calls(updateTabStateEndpoint)).toHaveLength(0);
           backendPersistenceOffMock.mockRestore();
         });
->>>>>>> 1.4.1:superset-frontend/src/SqlLab/actions/sqlLab.test.js
       });
     });
 

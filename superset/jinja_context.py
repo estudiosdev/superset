@@ -453,10 +453,7 @@ class JinjaTemplateProcessor(BaseTemplateProcessor):
         super().set_context(**kwargs)
         extra_cache = ExtraCache(
             extra_cache_keys=self._extra_cache_keys,
-<<<<<<< HEAD
-=======
             applied_filters=self._applied_filters,
->>>>>>> 1.4.1
             removed_filters=self._removed_filters,
             dialect=self._database.get_dialect(),
         )

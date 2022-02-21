@@ -22,14 +22,6 @@ under the License.
 This file documents any backwards-incompatible changes in Superset and
 assists people when migrating to a new version.
 
-<<<<<<< HEAD
-## 1.3.1
-
-### Breaking Changes
-
-- [16711](https://github.com/apache/incubator-superset/pull/16711): The `url_param` Jinja function will now by default escape the result. For instance, the value `O'Brien` will now be changed to `O''Brien`. To disable this behavior, call `url_param` with `escape_result` set to `False`: `url_param("my_key", "my default", escape_result=False)`.
-
-=======
 ## 1.4.1
 
 ### Breaking Changes
@@ -55,48 +47,30 @@ assists people when migrating to a new version.
 
 - [16809](https://github.com/apache/superset/pull/16809): When building the superset frontend assets manually, you should now use Node 16 (previously Node 14 was required/recommended). Node 14 will most likely still work for at least some time, but is no longer actively tested for on CI.
 
->>>>>>> 1.4.1
 ## 1.3.0
 
 ### Breaking Changes
 
-<<<<<<< HEAD
-- [15909](https://github.com/apache/incubator-superset/pull/15909): a change which
-drops a uniqueness criterion (which may or may not have existed) to the tables table. This constraint was obsolete as it is handled by the ORM due to differences in how MySQL, PostgreSQL, etc. handle uniqueness for NULL values.
-=======
 - [15909](https://github.com/apache/superset/pull/15909): a change which
   drops a uniqueness criterion (which may or may not have existed) to the tables table. This constraint was obsolete as it is handled by the ORM due to differences in how MySQL, PostgreSQL, etc. handle uniqueness for NULL values.
->>>>>>> 1.4.1
 
 ### Potential Downtime
 
 - [14234](https://github.com/apache/superset/pull/14234): Adds the `limiting_factor` column to the `query` table. Give the migration includes a DDL operation on a heavily trafficed table, potential service downtime may be required.
 
-<<<<<<< HEAD
-=======
 -[16454](https://github.com/apache/superset/pull/16454): Adds the `extra` column to the `table_columns` table. Users using MySQL will either need to schedule downtime or use the percona toolkit (or similar) to perform the migration.
 
->>>>>>> 1.4.1
 ## 1.2.0
 
 ### Deprecations
 
 - [13440](https://github.com/apache/superset/pull/13440): Dashboard/Charts reports and old Alerts is deprecated. The following config keys are deprecated:
-<<<<<<< HEAD
-    - ENABLE_ALERTS
-    - SCHEDULED_EMAIL_DEBUG_MODE
-    - EMAIL_REPORTS_CRON_RESOLUTION
-    - EMAIL_ASYNC_TIME_LIMIT_SEC
-    - EMAIL_REPORT_BCC_ADDRESS
-    - EMAIL_REPORTS_USER
-=======
   - ENABLE_ALERTS
   - SCHEDULED_EMAIL_DEBUG_MODE
   - EMAIL_REPORTS_CRON_RESOLUTION
   - EMAIL_ASYNC_TIME_LIMIT_SEC
   - EMAIL_REPORT_BCC_ADDRESS
   - EMAIL_REPORTS_USER
->>>>>>> 1.4.1
 
 ### Other
 
