@@ -32,6 +32,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 import superset.models.core as models
 from superset import app, dataframe, db, result_set, viz
+from superset.common.db_query_status import QueryStatus
 from superset.connectors.connector_registry import ConnectorRegistry
 from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
 from superset.exceptions import (
@@ -47,7 +48,7 @@ from superset.models.dashboard import Dashboard
 from superset.models.slice import Slice
 from superset.models.sql_lab import Query
 from superset.typing import FormData
-from superset.utils.core import QueryStatus, TimeRangeEndpoint
+from superset.utils.core import TimeRangeEndpoint
 from superset.utils.decorators import stats_timing
 from superset.viz import BaseViz
 
@@ -58,6 +59,15 @@ stats_logger = app.config["STATS_LOGGER"]
 REJECTED_FORM_DATA_KEYS: List[str] = []
 if not app.config["ENABLE_JAVASCRIPT_CONTROLS"]:
     REJECTED_FORM_DATA_KEYS = ["js_tooltip", "js_onclick_href", "js_data_mutator"]
+
+
+def sanitize_datasource_data(datasource_data: Dict[str, Any]) -> Dict[str, Any]:
+    if datasource_data:
+        datasource_database = datasource_data.get("database")
+        if datasource_database:
+            datasource_database["parameters"] = {}
+
+    return datasource_data
 
 
 def bootstrap_user_data(user: User, include_perms: bool = False) -> Dict[str, Any]:
@@ -358,7 +368,7 @@ def get_dashboard_extra_filters(
         dashboard is None
         or not dashboard.json_metadata
         or not dashboard.slices
-        or not any([slc for slc in dashboard.slices if slc.id == slice_id])
+        or not any(slc for slc in dashboard.slices if slc.id == slice_id)
     ):
         return []
 
@@ -461,7 +471,7 @@ def is_slice_in_container(
 
 
 def is_owner(obj: Union[Dashboard, Slice], user: User) -> bool:
-    """ Check if user is owner of the slice """
+    """Check if user is owner of the slice"""
     return obj and user in obj.owners
 
 
@@ -527,7 +537,7 @@ def check_datasource_perms(
                 level=ErrorLevel.ERROR,
                 message=str(ex),
             )
-        )
+        ) from ex
 
     if datasource_type is None:
         raise SupersetSecurityException(
@@ -545,14 +555,14 @@ def check_datasource_perms(
             form_data=form_data,
             force=False,
         )
-    except NoResultFound:
+    except NoResultFound as ex:
         raise SupersetSecurityException(
             SupersetError(
                 error_type=SupersetErrorType.UNKNOWN_DATASOURCE_TYPE_ERROR,
                 level=ErrorLevel.ERROR,
                 message=_("Could not find viz object"),
             )
-        )
+        ) from ex
 
     viz_obj.raise_for_access()
 
@@ -578,14 +588,14 @@ def check_slice_perms(_self: Any, slice_id: int) -> None:
                 form_data=form_data,
                 force=False,
             )
-        except NoResultFound:
+        except NoResultFound as ex:
             raise SupersetSecurityException(
                 SupersetError(
                     error_type=SupersetErrorType.UNKNOWN_DATASOURCE_TYPE_ERROR,
                     level=ErrorLevel.ERROR,
                     message="Could not find viz object",
                 )
-            )
+            ) from ex
 
         viz_obj.raise_for_access()
 
@@ -603,8 +613,8 @@ def _deserialize_results_payload(
         with stats_timing("sqllab.query.results_backend_pa_deserialize", stats_logger):
             try:
                 pa_table = pa.deserialize(ds_payload["data"])
-            except pa.ArrowSerializationError:
-                raise SerializationError("Unable to deserialize table")
+            except pa.ArrowSerializationError as ex:
+                raise SerializationError("Unable to deserialize table") from ex
 
         df = result_set.SupersetResultSet.convert_table_to_df(pa_table)
         ds_payload["data"] = dataframe.df_to_records(df) or []

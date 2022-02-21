@@ -14,6 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+# pylint: disable=too-many-lines
 import json
 import logging
 from datetime import datetime
@@ -51,7 +52,12 @@ from superset.charts.commands.export import ExportChartsCommand
 from superset.charts.commands.importers.dispatcher import ImportChartsCommand
 from superset.charts.commands.update import UpdateChartCommand
 from superset.charts.dao import ChartDAO
-from superset.charts.filters import ChartAllTextFilter, ChartFavoriteFilter, ChartFilter
+from superset.charts.filters import (
+    ChartAllTextFilter,
+    ChartCertifiedFilter,
+    ChartFavoriteFilter,
+    ChartFilter,
+)
 from superset.charts.post_processing import apply_post_process
 from superset.charts.schemas import (
     CHART_SCHEMAS,
@@ -120,8 +126,11 @@ class ChartRestApi(BaseSupersetModelRestApi):
     method_permission_name = MODEL_API_RW_METHOD_PERMISSION_MAP
     show_columns = [
         "cache_timeout",
+        "certified_by",
+        "certification_details",
         "dashboards.dashboard_title",
         "dashboards.id",
+        "dashboards.json_metadata",
         "description",
         "owners.first_name",
         "owners.id",
@@ -134,6 +143,8 @@ class ChartRestApi(BaseSupersetModelRestApi):
     ]
     show_select_columns = show_columns + ["table.id"]
     list_columns = [
+        "certified_by",
+        "certification_details",
         "cache_timeout",
         "changed_by.first_name",
         "changed_by.last_name",
@@ -200,7 +211,7 @@ class ChartRestApi(BaseSupersetModelRestApi):
     base_order = ("changed_on", "desc")
     base_filters = [["id", ChartFilter, lambda: []]]
     search_filters = {
-        "id": [ChartFavoriteFilter],
+        "id": [ChartFavoriteFilter, ChartCertifiedFilter],
         "slice_name": [ChartAllTextFilter],
     }
 
@@ -502,10 +513,7 @@ class ChartRestApi(BaseSupersetModelRestApi):
         # Post-process the data so it matches the data presented in the chart.
         # This is needed for sending reports based on text charts that do the
         # post-processing of data, eg, the pivot table.
-        if (
-            result_type == ChartDataResultType.POST_PROCESSED
-            and result_format == ChartDataResultFormat.CSV
-        ):
+        if result_type == ChartDataResultType.POST_PROCESSED:
             result = apply_post_process(result, form_data)
 
         if result_format == ChartDataResultFormat.CSV:

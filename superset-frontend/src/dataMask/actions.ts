@@ -76,14 +76,13 @@ export function updateDataMask(
 }
 
 export function clearDataMask(filterId: string | number) {
-  return updateDataMask(
-    filterId,
-    getInitialDataMask(filterId, {
-      filterState: {
-        value: null,
-      },
-    }),
-  );
+  return updateDataMask(filterId, getInitialDataMask(filterId));
+}
+
+export function clearDataMaskState(): ClearDataMaskState {
+  return {
+    type: CLEAR_DATA_MASK_STATE,
+  };
 }
 
 export function clearDataMaskState(): ClearDataMaskState {

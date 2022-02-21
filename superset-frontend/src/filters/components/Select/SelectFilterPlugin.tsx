@@ -46,11 +46,11 @@ import {
 type DataMaskAction =
   | { type: 'ownState'; ownState: JsonObject }
   | {
-      type: 'filterState';
-      __cache: JsonObject;
-      extraFormData: ExtraFormData;
-      filterState: { value: SelectValue; label?: string };
-    };
+    type: 'filterState';
+    __cache: JsonObject;
+    extraFormData: ExtraFormData;
+    filterState: { value: SelectValue; label?: string };
+  };
 
 function reducer(
   draft: DataMask & { __cache?: JsonObject },
@@ -104,6 +104,15 @@ export default function PluginFilterSelect(props: PluginFilterSelectProps) {
     extraFormData: {},
     filterState,
   });
+  const datatype: GenericDataType = coltypeMap[col];
+  const labelFormatter = useMemo(
+    () =>
+      getDataRecordFormatter({
+        timeFormatter: smartDateDetailedFormatter,
+      }),
+    [],
+  );
+
   const updateDataMask = useCallback(
     (values: SelectValue) => {
       const emptyFilter =
@@ -124,7 +133,9 @@ export default function PluginFilterSelect(props: PluginFilterSelectProps) {
         filterState: {
           ...filterState,
           label: values?.length
-            ? `${(values || []).map(formatFilterValue).join(', ')}${suffix}`
+            ? `${(values || [])
+              .map(value => labelFormatter(value, datatype))
+              .join(', ')}${suffix}`
             : undefined,
           value:
             appSection === AppSection.FILTER_CONFIG_MODAL && defaultToFirstItem
@@ -133,14 +144,17 @@ export default function PluginFilterSelect(props: PluginFilterSelectProps) {
         },
       });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       appSection,
       col,
+      datatype,
       defaultToFirstItem,
       dispatchDataMask,
       enableEmptyFilter,
       inverseSelection,
       JSON.stringify(filterState),
+      labelFormatter,
     ],
   );
 
@@ -186,15 +200,6 @@ export default function PluginFilterSelect(props: PluginFilterSelectProps) {
     clearSuggestionSearch();
     unsetFocusedFilter();
   };
-
-  const datatype: GenericDataType = coltypeMap[col];
-  const labelFormatter = useMemo(
-    () =>
-      getDataRecordFormatter({
-        timeFormatter: smartDateDetailedFormatter,
-      }),
-    [],
-  );
 
   const handleChange = (value?: SelectValue | number | string) => {
     const values = ensureIsArray(value);

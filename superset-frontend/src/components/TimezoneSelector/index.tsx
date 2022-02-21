@@ -17,12 +17,16 @@
  * under the License.
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import moment from 'moment-timezone';
+import { t } from '@superset-ui/core';
+import { Select } from 'src/components';
 
-import { NativeGraySelect as Select } from 'src/components/Select';
+const DEFAULT_TIMEZONE = {
+  name: 'GMT Standard Time',
+  value: 'Africa/Abidjan', // timezones are deduped by the first alphabetical value
+};
 
-const DEFAULT_TIMEZONE = 'GMT Standard Time';
 const MIN_SELECT_WIDTH = '400px';
 
 const offsetsToName = {
@@ -37,7 +41,7 @@ const offsetsToName = {
   '-540-480': ['Alaska Standard Time', 'Alaska Daylight Time'],
   '-600-600': ['Hawaii Standard Time', 'Hawaii Daylight Time'],
   '60120': ['Central European Time', 'Central European Daylight Time'],
-  '00': [DEFAULT_TIMEZONE, DEFAULT_TIMEZONE],
+  '00': [DEFAULT_TIMEZONE.name, DEFAULT_TIMEZONE.name],
   '060': ['GMT Standard Time - London', 'British Summer Time'],
 };
 
@@ -92,40 +96,37 @@ const TIMEZONE_OPTIONS = TIMEZONES.sort(
   offsets: getOffsetKey(zone.name),
 }));
 
-const timezoneOptions = TIMEZONE_OPTIONS.map(option => (
-  <Select.Option key={option.value} value={option.value}>
-    {option.label}
-  </Select.Option>
-));
-
 const TimezoneSelector = ({ onTimezoneChange, timezone }: TimezoneProps) => {
   const prevTimezone = useRef(timezone);
   const matchTimezoneToOptions = (timezone: string) =>
     TIMEZONE_OPTIONS.find(option => option.offsets === getOffsetKey(timezone))
-      ?.value || DEFAULT_TIMEZONE;
+      ?.value || DEFAULT_TIMEZONE.value;
 
-  const updateTimezone = (tz: string) => {
-    // update the ref to track changes
-    prevTimezone.current = tz;
-    // the parent component contains the state for the value
-    onTimezoneChange(tz);
-  };
+  const updateTimezone = useCallback(
+    (tz: string) => {
+      // update the ref to track changes
+      prevTimezone.current = tz;
+      // the parent component contains the state for the value
+      onTimezoneChange(tz);
+    },
+    [onTimezoneChange],
+  );
 
   useEffect(() => {
     const updatedTz = matchTimezoneToOptions(timezone || moment.tz.guess());
     if (prevTimezone.current !== updatedTz) {
       updateTimezone(updatedTz);
     }
-  }, [timezone]);
+  }, [timezone, updateTimezone]);
 
   return (
     <Select
+      ariaLabel={t('Timezone selector')}
       css={{ minWidth: MIN_SELECT_WIDTH }} // smallest size for current values
       onChange={onTimezoneChange}
-      value={timezone || DEFAULT_TIMEZONE}
-    >
-      {timezoneOptions}
-    </Select>
+      value={timezone || DEFAULT_TIMEZONE.value}
+      options={TIMEZONE_OPTIONS}
+    />
   );
 };
 

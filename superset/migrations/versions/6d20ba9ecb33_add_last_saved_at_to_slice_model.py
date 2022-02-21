@@ -17,14 +17,22 @@
 """add_last_saved_at_to_slice_model
 
 Revision ID: 6d20ba9ecb33
+<<<<<<< HEAD
 Revises: ('ae1ed299413b', 'f6196627326f')
+=======
+Revises: 'f6196627326f'
+>>>>>>> 1.4.1
 Create Date: 2021-08-02 21:14:58.200438
 
 """
 
 # revision identifiers, used by Alembic.
 revision = "6d20ba9ecb33"
+<<<<<<< HEAD
 down_revision = ("ae1ed299413b", "f6196627326f")
+=======
+down_revision = "f6196627326f"
+>>>>>>> 1.4.1
 
 import sqlalchemy as sa
 from alembic import op

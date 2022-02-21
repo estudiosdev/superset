@@ -591,6 +591,7 @@ function mapStateToProps(state) {
   );
   const chartKey = Object.keys(charts)[0];
   const chart = charts[chartKey];
+
   return {
     isDatasourceMetaLoading: explore.isDatasourceMetaLoading,
     datasource: explore.datasource,
@@ -620,7 +621,6 @@ function mapStateToProps(state) {
     timeout: explore.common.conf.SUPERSET_WEBSERVER_TIMEOUT,
     ownState: dataMask[form_data.slice_id ?? 0]?.ownState, // 0 - unsaved chart
     impressionId,
-    userId: explore.user_id,
     user: explore.user,
     reports,
   };

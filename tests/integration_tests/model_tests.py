@@ -31,10 +31,11 @@ from sqlalchemy.types import DateTime
 import tests.integration_tests.test_app
 from superset import app, db as metadata_db
 from superset.db_engine_specs.postgres import PostgresEngineSpec
+from superset.common.db_query_status import QueryStatus
 from superset.models.core import Database
 from superset.models.slice import Slice
 from superset.models.sql_types.base import literal_dttm_type_factory
-from superset.utils.core import get_example_database, QueryStatus
+from superset.utils.core import get_example_database
 
 from .base_tests import SupersetTestCase
 from .fixtures.energy_dashboard import load_energy_table_with_slice
@@ -432,6 +433,7 @@ class TestSqlaTableModel(SupersetTestCase):
             from_dttm=None,
             to_dttm=None,
             extras=dict(time_grain_sqla="P1Y"),
+            series_limit=15 if inner_join and is_timeseries else None,
         )
         qr = tbl.query(query_obj)
         self.assertEqual(qr.status, QueryStatus.SUCCESS)

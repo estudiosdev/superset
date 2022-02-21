@@ -44,6 +44,7 @@ const propTypes = {
   // formData contains chart's own filter parameter
   // and merged with extra filter that current dashboard applying
   formData: PropTypes.object.isRequired,
+  labelColors: PropTypes.object,
   width: PropTypes.number,
   height: PropTypes.number,
   setControlValue: PropTypes.func,
@@ -68,6 +69,9 @@ const propTypes = {
 };
 
 const BLANK = {};
+const NONEXISTENT_DATASET = t(
+  'The dataset associated with this chart no longer exists',
+);
 
 const defaultProps = {
   addFilter: () => BLANK,
@@ -178,7 +182,11 @@ class Chart extends React.PureComponent {
     const message = chartAlert || queryResponse?.message;
 
     // if datasource is still loading, don't render JS errors
-    if (chartAlert && datasource === PLACEHOLDER_DATASOURCE) {
+    if (
+      chartAlert !== undefined &&
+      chartAlert !== NONEXISTENT_DATASET &&
+      datasource === PLACEHOLDER_DATASOURCE
+    ) {
       return (
         <Styles
           data-ui-anchor="chart"

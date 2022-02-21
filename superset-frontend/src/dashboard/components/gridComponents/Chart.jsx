@@ -52,6 +52,7 @@ const propTypes = {
   // from redux
   chart: chartPropShape.isRequired,
   formData: PropTypes.object.isRequired,
+  labelColors: PropTypes.object,
   datasource: PropTypes.object,
   slice: slicePropShape.isRequired,
   sliceName: PropTypes.string.isRequired,
@@ -87,7 +88,8 @@ const defaultProps = {
 // resizing across all slices on a dashboard on every update
 const RESIZE_TIMEOUT = 350;
 const SHOULD_UPDATE_ON_PROP_CHANGES = Object.keys(propTypes).filter(
-  prop => prop !== 'width' && prop !== 'height',
+  prop =>
+    prop !== 'width' && prop !== 'height' && prop !== 'isComponentVisible',
 );
 const OVERFLOWABLE_VIZ_TYPES = new Set(['filter_box']);
 const DEFAULT_HEADER_HEIGHT = 22;
@@ -229,7 +231,7 @@ export default class Chart extends React.Component {
     });
   };
 
-  getChartUrl = () => getExploreLongUrl(this.props.formData);
+  getChartUrl = () => getExploreLongUrl(this.props.formData, null, false);
 
   exportCSV(isFullCSV = false) {
     this.props.logEvent(LOG_ACTIONS_EXPORT_CSV_DASHBOARD_CHART, {
@@ -240,7 +242,7 @@ export default class Chart extends React.Component {
       formData: isFullCSV
         ? { ...this.props.formData, row_limit: this.props.maxRows }
         : this.props.formData,
-      resultType: 'results',
+      resultType: 'full',
       resultFormat: 'csv',
     });
   }
@@ -273,6 +275,7 @@ export default class Chart extends React.Component {
       editMode,
       filters,
       formData,
+      labelColors,
       updateSliceName,
       sliceName,
       toggleExpandSlice,
@@ -395,6 +398,7 @@ export default class Chart extends React.Component {
             dashboardId={dashboardId}
             initialValues={initialValues}
             formData={formData}
+            labelColors={labelColors}
             ownState={ownState}
             filterState={filterState}
             queriesResponse={chart.queriesResponse}

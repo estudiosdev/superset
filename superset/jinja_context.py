@@ -96,10 +96,12 @@ class ExtraCache:
     def __init__(
         self,
         extra_cache_keys: Optional[List[Any]] = None,
+        applied_filters: Optional[List[str]] = None,
         removed_filters: Optional[List[str]] = None,
         dialect: Optional[Dialect] = None,
     ):
         self.extra_cache_keys = extra_cache_keys
+        self.applied_filters = applied_filters if applied_filters is not None else []
         self.removed_filters = removed_filters if removed_filters is not None else []
         self.dialect = dialect
 
@@ -178,6 +180,7 @@ class ExtraCache:
         :returns: The URL parameters
         """
 
+        # pylint: disable=import-outside-toplevel
         from superset.views.utils import get_form_data
 
         if has_request_context() and request.args.get(param):  # type: ignore
@@ -299,6 +302,7 @@ class ExtraCache:
             only apply to the inner query
         :return: returns a list of filters
         """
+        # pylint: disable=import-outside-toplevel
         from superset.utils.core import FilterOperator
         from superset.views.utils import get_form_data
 
@@ -321,6 +325,9 @@ class ExtraCache:
                 if remove_filter:
                     if column not in self.removed_filters:
                         self.removed_filters.append(column)
+                if column not in self.applied_filters:
+                    self.applied_filters.append(column)
+
                 if op in (
                     FilterOperator.IN.value,
                     FilterOperator.NOT_IN.value,
@@ -346,10 +353,10 @@ def safe_proxy(func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
     if value_type in COLLECTION_TYPES:
         try:
             return_value = json.loads(json.dumps(return_value))
-        except TypeError:
+        except TypeError as ex:
             raise SupersetTemplateException(
                 _("Unsupported return value for method %(name)s", name=func.__name__,)
-            )
+            ) from ex
 
     return return_value
 
@@ -370,10 +377,10 @@ def validate_context_types(context: Dict[str, Any]) -> Dict[str, Any]:
         if arg_type in COLLECTION_TYPES:
             try:
                 context[key] = json.loads(json.dumps(context[key]))
-            except TypeError:
+            except TypeError as ex:
                 raise SupersetTemplateException(
                     _("Unsupported template value for key %(key)s", key=key)
-                )
+                ) from ex
 
     return context
 
@@ -391,7 +398,7 @@ def validate_template_context(
     return validate_context_types(context)
 
 
-class BaseTemplateProcessor:  # pylint: disable=too-few-public-methods
+class BaseTemplateProcessor:
     """
     Base class for database-specific jinja context
     """
@@ -406,6 +413,7 @@ class BaseTemplateProcessor:  # pylint: disable=too-few-public-methods
         table: Optional["SqlaTable"] = None,
         extra_cache_keys: Optional[List[Any]] = None,
         removed_filters: Optional[List[str]] = None,
+        applied_filters: Optional[List[str]] = None,
         **kwargs: Any,
     ) -> None:
         self._database = database
@@ -416,6 +424,7 @@ class BaseTemplateProcessor:  # pylint: disable=too-few-public-methods
         elif table:
             self._schema = table.schema
         self._extra_cache_keys = extra_cache_keys
+        self._applied_filters = applied_filters
         self._removed_filters = removed_filters
         self._context: Dict[str, Any] = {}
         self._env = SandboxedEnvironment(undefined=DebugUndefined)
@@ -444,6 +453,10 @@ class JinjaTemplateProcessor(BaseTemplateProcessor):
         super().set_context(**kwargs)
         extra_cache = ExtraCache(
             extra_cache_keys=self._extra_cache_keys,
+<<<<<<< HEAD
+=======
+            applied_filters=self._applied_filters,
+>>>>>>> 1.4.1
             removed_filters=self._removed_filters,
             dialect=self._database.get_dialect(),
         )
@@ -459,9 +472,7 @@ class JinjaTemplateProcessor(BaseTemplateProcessor):
         )
 
 
-class NoOpTemplateProcessor(
-    BaseTemplateProcessor
-):  # pylint: disable=too-few-public-methods
+class NoOpTemplateProcessor(BaseTemplateProcessor):
     def process_template(self, sql: str, **kwargs: Any) -> str:
         """
         Makes processing a template a noop
@@ -515,6 +526,7 @@ class PrestoTemplateProcessor(JinjaTemplateProcessor):
         :return: the latest partition array
         """
 
+        # pylint: disable=import-outside-toplevel
         from superset.db_engine_specs.presto import PrestoEngineSpec
 
         table_name, schema = self._schema_table(table_name, self._schema)
@@ -525,6 +537,7 @@ class PrestoTemplateProcessor(JinjaTemplateProcessor):
     def latest_sub_partition(self, table_name: str, **kwargs: Any) -> Any:
         table_name, schema = self._schema_table(table_name, self._schema)
 
+        # pylint: disable=import-outside-toplevel
         from superset.db_engine_specs.presto import PrestoEngineSpec
 
         return cast(
@@ -546,10 +559,10 @@ DEFAULT_PROCESSORS = {"presto": PrestoTemplateProcessor, "hive": HiveTemplatePro
 @memoized
 def get_template_processors() -> Dict[str, Any]:
     processors = current_app.config.get("CUSTOM_TEMPLATE_PROCESSORS", {})
-    for engine in DEFAULT_PROCESSORS:
+    for engine, processor in DEFAULT_PROCESSORS.items():
         # do not overwrite engine-specific CUSTOM_TEMPLATE_PROCESSORS
         if not engine in processors:
-            processors[engine] = DEFAULT_PROCESSORS[engine]
+            processors[engine] = processor
 
     return processors
 
