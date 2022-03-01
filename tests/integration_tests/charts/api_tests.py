@@ -18,9 +18,9 @@
 """Unit tests for Superset"""
 import json
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime
 from io import BytesIO
-from typing import Optional
+from typing import Optional, List
 from unittest import mock
 from zipfile import is_zipfile, ZipFile
 
@@ -35,13 +35,14 @@ import humanize
 import prison
 import pytest
 import yaml
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 from sqlalchemy.sql import func
 
 from tests.integration_tests.fixtures.world_bank_dashboard import (
     load_world_bank_dashboard_with_slices,
 )
 from tests.integration_tests.test_app import app
+from superset import security_manager
 from superset.charts.commands.data import ChartDataCommand
 from superset.connectors.sqla.models import SqlaTable, TableColumn
 from superset.errors import SupersetErrorType
@@ -56,7 +57,9 @@ from superset.utils.core import (
     AnnotationType,
     ChartDataResultFormat,
     get_example_database,
+    get_example_default_schema,
     get_main_database,
+    AdhocMetricExpressionType,
 )
 
 
@@ -106,7 +109,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
             charts = []
             admin = self.get_user("admin")
             for cx in range(CHARTS_FIXTURE_COUNT - 1):
-                charts.append(self.insert_chart(f"name{cx}", [admin.id], 1))
+                charts.append(self.insert_chart(f"name{cx}", [admin.id], 1,))
             fav_charts = []
             for cx in range(round(CHARTS_FIXTURE_COUNT / 2)):
                 fav_star = FavStar(
@@ -122,6 +125,29 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
                 db.session.delete(chart)
             for fav_chart in fav_charts:
                 db.session.delete(fav_chart)
+            db.session.commit()
+
+    @pytest.fixture()
+    def create_certified_charts(self):
+        with self.create_app().app_context():
+            certified_charts = []
+            admin = self.get_user("admin")
+            for cx in range(CHARTS_FIXTURE_COUNT):
+                certified_charts.append(
+                    self.insert_chart(
+                        f"certified{cx}",
+                        [admin.id],
+                        1,
+                        certified_by="John Doe",
+                        certification_details="Sample certification",
+                    )
+                )
+
+            yield certified_charts
+
+            # rollback changes
+            for chart in certified_charts:
+                db.session.delete(chart)
             db.session.commit()
 
     @pytest.fixture()
@@ -187,9 +213,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         data = json.loads(rv.data.decode("utf-8"))
         assert rv.status_code == 200
         assert set(data["permissions"]) == {
-            "can_get_data",
             "can_read",
-            "can_post_data",
             "can_write",
         }
 
@@ -448,6 +472,8 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
             "datasource_id": 1,
             "datasource_type": "table",
             "dashboards": dashboards_ids,
+            "certified_by": "John Doe",
+            "certification_details": "Sample certification",
         }
         self.login(username="admin")
         uri = f"api/v1/chart/"
@@ -543,6 +569,9 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         """
         Chart API: Test update
         """
+        schema = get_example_default_schema()
+        full_table_name = f"{schema}.birth_names" if schema else "birth_names"
+
         admin = self.get_user("admin")
         gamma = self.get_user("gamma")
         birth_names_table_id = SupersetTestCase.get_table(name="birth_names").id
@@ -560,6 +589,8 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
             "datasource_id": birth_names_table_id,
             "datasource_type": "table",
             "dashboards": [dash_id],
+            "certified_by": "Mario Rossi",
+            "certification_details": "Edited certification",
         }
         self.login(username="admin")
         uri = f"api/v1/chart/{chart_id}"
@@ -570,32 +601,53 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         self.assertEqual(model.created_by, admin)
         self.assertEqual(model.slice_name, "title1_changed")
         self.assertEqual(model.description, "description1")
-        self.assertIn(admin, model.owners)
+        self.assertNotIn(admin, model.owners)
         self.assertIn(gamma, model.owners)
         self.assertEqual(model.viz_type, "viz_type1")
         self.assertEqual(model.params, """{"a": 1}""")
         self.assertEqual(model.cache_timeout, 1000)
         self.assertEqual(model.datasource_id, birth_names_table_id)
         self.assertEqual(model.datasource_type, "table")
-        self.assertEqual(model.datasource_name, "birth_names")
+        self.assertEqual(model.datasource_name, full_table_name)
+        self.assertEqual(model.certified_by, "Mario Rossi")
+        self.assertEqual(model.certification_details, "Edited certification")
         self.assertIn(model.id, [slice.id for slice in related_dashboard.slices])
         db.session.delete(model)
         db.session.commit()
 
-    def test_update_chart_new_owner(self):
+    def test_update_chart_new_owner_not_admin(self):
         """
-        Chart API: Test update set new owner to current user
+        Chart API: Test update set new owner implicitly adds logged in owner
+        """
+        gamma = self.get_user("gamma")
+        alpha = self.get_user("alpha")
+        chart_id = self.insert_chart("title", [alpha.id], 1).id
+        chart_data = {"slice_name": "title1_changed", "owners": [gamma.id]}
+        self.login(username="alpha")
+        uri = f"api/v1/chart/{chart_id}"
+        rv = self.put_assert_metric(uri, chart_data, "put")
+        self.assertEqual(rv.status_code, 200)
+        model = db.session.query(Slice).get(chart_id)
+        self.assertIn(alpha, model.owners)
+        self.assertIn(gamma, model.owners)
+        db.session.delete(model)
+        db.session.commit()
+
+    def test_update_chart_new_owner_admin(self):
+        """
+        Chart API: Test update set new owner as admin to other than current user
         """
         gamma = self.get_user("gamma")
         admin = self.get_user("admin")
-        chart_id = self.insert_chart("title", [gamma.id], 1).id
-        chart_data = {"slice_name": "title1_changed"}
+        chart_id = self.insert_chart("title", [admin.id], 1).id
+        chart_data = {"slice_name": "title1_changed", "owners": [gamma.id]}
         self.login(username="admin")
         uri = f"api/v1/chart/{chart_id}"
         rv = self.put_assert_metric(uri, chart_data, "put")
         self.assertEqual(rv.status_code, 200)
         model = db.session.query(Slice).get(chart_id)
-        self.assertIn(admin, model.owners)
+        self.assertNotIn(admin, model.owners)
+        self.assertIn(gamma, model.owners)
         db.session.delete(model)
         db.session.commit()
 
@@ -709,6 +761,8 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         self.assertEqual(rv.status_code, 200)
         expected_result = {
             "cache_timeout": None,
+            "certified_by": None,
+            "certification_details": None,
             "dashboards": [],
             "description": None,
             "owners": [
@@ -903,6 +957,36 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         data = json.loads(rv.data.decode("utf-8"))
         self.assertEqual(data["count"], 8)
 
+    @pytest.mark.usefixtures("create_certified_charts")
+    def test_gets_certified_charts_filter(self):
+        arguments = {
+            "filters": [{"col": "id", "opr": "chart_is_certified", "value": True,}],
+            "keys": ["none"],
+            "columns": ["slice_name"],
+        }
+        self.login(username="admin")
+
+        uri = f"api/v1/chart/?q={prison.dumps(arguments)}"
+        rv = self.get_assert_metric(uri, "get_list")
+        self.assertEqual(rv.status_code, 200)
+        data = json.loads(rv.data.decode("utf-8"))
+        self.assertEqual(data["count"], CHARTS_FIXTURE_COUNT)
+
+    @pytest.mark.usefixtures("create_charts")
+    def test_gets_not_certified_charts_filter(self):
+        arguments = {
+            "filters": [{"col": "id", "opr": "chart_is_certified", "value": False,}],
+            "keys": ["none"],
+            "columns": ["slice_name"],
+        }
+        self.login(username="admin")
+
+        uri = f"api/v1/chart/?q={prison.dumps(arguments)}"
+        rv = self.get_assert_metric(uri, "get_list")
+        self.assertEqual(rv.status_code, 200)
+        data = json.loads(rv.data.decode("utf-8"))
+        self.assertEqual(data["count"], 17)
+
     @pytest.mark.usefixtures("load_energy_charts")
     def test_user_gets_none_filtered_energy_slices(self):
         # test filtering on datasource_name
@@ -1053,7 +1137,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         """
         self.login(username="admin")
         request_payload = get_query_context("birth_names")
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         self.assertEqual(rv.status_code, 200)
         data = json.loads(rv.data.decode("utf-8"))
         expected_row_count = self.get_expected_row_count("client_id_1")
@@ -1127,7 +1211,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
             "__time_range": "100 years ago : now",
             "__time_origin": "now",
         }
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         self.assertEqual(rv.status_code, 200)
         data = json.loads(rv.data.decode("utf-8"))
         self.assertEqual(
@@ -1156,7 +1240,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         request_payload["queries"][0]["row_limit"] = 5
         request_payload["queries"][0]["row_offset"] = 0
         request_payload["queries"][0]["orderby"] = [["name", True]]
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         response_payload = json.loads(rv.data.decode("utf-8"))
         result = response_payload["result"][0]
         self.assertEqual(result["rowcount"], 5)
@@ -1169,7 +1253,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         offset = 2
         expected_name = result["data"][offset]["name"]
         request_payload["queries"][0]["row_offset"] = offset
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         response_payload = json.loads(rv.data.decode("utf-8"))
         result = response_payload["result"][0]
         self.assertEqual(result["rowcount"], 5)
@@ -1186,24 +1270,77 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         self.login(username="admin")
         request_payload = get_query_context("birth_names")
         del request_payload["queries"][0]["row_limit"]
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         response_payload = json.loads(rv.data.decode("utf-8"))
         result = response_payload["result"][0]
         self.assertEqual(result["rowcount"], 7)
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @mock.patch(
-        "superset.common.query_actions.config", {**app.config, "SAMPLES_ROW_LIMIT": 5},
+        "superset.utils.core.current_app.config", {**app.config, "SQL_MAX_ROW": 10},
     )
-    def test_chart_data_default_sample_limit(self):
+    def test_chart_data_sql_max_row_limit(self):
         """
-        Chart data API: Ensure sample response row count doesn't exceed default limit
+        Chart data API: Ensure row count doesn't exceed max global row limit
+        """
+        self.login(username="admin")
+        request_payload = get_query_context("birth_names")
+        request_payload["queries"][0]["row_limit"] = 10000000
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
+        response_payload = json.loads(rv.data.decode("utf-8"))
+        result = response_payload["result"][0]
+        self.assertEqual(result["rowcount"], 10)
+
+    @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
+    @mock.patch(
+        "superset.common.query_object.config", {**app.config, "SAMPLES_ROW_LIMIT": 5},
+    )
+    def test_chart_data_sample_default_limit(self):
+        """
+        Chart data API: Ensure sample response row count defaults to config defaults
+        """
+        self.login(username="admin")
+        request_payload = get_query_context("birth_names")
+        request_payload["result_type"] = utils.ChartDataResultType.SAMPLES
+        del request_payload["queries"][0]["row_limit"]
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
+        response_payload = json.loads(rv.data.decode("utf-8"))
+        result = response_payload["result"][0]
+        self.assertEqual(result["rowcount"], 5)
+
+    @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
+    @mock.patch(
+        "superset.common.query_actions.config",
+        {**app.config, "SAMPLES_ROW_LIMIT": 5, "SQL_MAX_ROW": 15},
+    )
+    def test_chart_data_sample_custom_limit(self):
+        """
+        Chart data API: Ensure requested sample response row count is between
+        default and SQL max row limit
         """
         self.login(username="admin")
         request_payload = get_query_context("birth_names")
         request_payload["result_type"] = utils.ChartDataResultType.SAMPLES
         request_payload["queries"][0]["row_limit"] = 10
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
+        response_payload = json.loads(rv.data.decode("utf-8"))
+        result = response_payload["result"][0]
+        self.assertEqual(result["rowcount"], 10)
+
+    @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
+    @mock.patch(
+        "superset.utils.core.current_app.config", {**app.config, "SQL_MAX_ROW": 5},
+    )
+    def test_chart_data_sql_max_row_sample_limit(self):
+        """
+        Chart data API: Ensure requested sample response row count doesn't
+        exceed SQL max row limit
+        """
+        self.login(username="admin")
+        request_payload = get_query_context("birth_names")
+        request_payload["result_type"] = utils.ChartDataResultType.SAMPLES
+        request_payload["queries"][0]["row_limit"] = 10000000
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         response_payload = json.loads(rv.data.decode("utf-8"))
         result = response_payload["result"][0]
         self.assertEqual(result["rowcount"], 5)
@@ -1215,7 +1352,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         self.login(username="admin")
         request_payload = get_query_context("birth_names")
         request_payload["result_type"] = "qwerty"
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         self.assertEqual(rv.status_code, 400)
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
@@ -1226,7 +1363,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         self.login(username="admin")
         request_payload = get_query_context("birth_names")
         request_payload["result_format"] = "qwerty"
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         self.assertEqual(rv.status_code, 400)
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
@@ -1252,7 +1389,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         self.login(username="admin")
         request_payload = get_query_context("birth_names")
         request_payload["result_type"] = utils.ChartDataResultType.QUERY
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         self.assertEqual(rv.status_code, 200)
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
@@ -1263,7 +1400,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         self.login(username="admin")
         request_payload = get_query_context("birth_names")
         request_payload["result_format"] = "csv"
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         self.assertEqual(rv.status_code, 200)
 
     # Test chart csv without permission
@@ -1276,7 +1413,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         request_payload = get_query_context("birth_names")
         request_payload["result_format"] = "csv"
 
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         self.assertEqual(rv.status_code, 403)
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
@@ -1288,7 +1425,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         request_payload = get_query_context("birth_names")
         request_payload["queries"][0]["filters"][0]["op"] = "In"
         request_payload["queries"][0]["row_limit"] = 10
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         response_payload = json.loads(rv.data.decode("utf-8"))
         result = response_payload["result"][0]
         self.assertEqual(result["rowcount"], 10)
@@ -1314,7 +1451,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
             "op": "!=",
             "val": ms_epoch,
         }
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         response_payload = json.loads(rv.data.decode("utf-8"))
         result = response_payload["result"][0]
 
@@ -1356,7 +1493,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
                 },
             }
         ]
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         self.assertEqual(rv.status_code, 200)
         response_payload = json.loads(rv.data.decode("utf-8"))
         result = response_payload["result"][0]
@@ -1379,7 +1516,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
             {"col": "non_existent_filter", "op": "==", "val": "foo"},
         ]
         request_payload["result_type"] = utils.ChartDataResultType.QUERY
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         self.assertEqual(rv.status_code, 200)
         response_payload = json.loads(rv.data.decode("utf-8"))
         assert "non_existent_filter" not in response_payload["result"][0]["query"]
@@ -1394,7 +1531,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         request_payload["queries"][0]["filters"] = [
             {"col": "gender", "op": "==", "val": "foo"}
         ]
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         self.assertEqual(rv.status_code, 200)
         response_payload = json.loads(rv.data.decode("utf-8"))
         result = response_payload["result"][0]
@@ -1410,8 +1547,34 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         request_payload["queries"][0]["filters"] = []
         # erroneus WHERE-clause
         request_payload["queries"][0]["extras"]["where"] = "(gender abc def)"
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         self.assertEqual(rv.status_code, 400)
+
+    @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
+    def test_chart_data_with_invalid_where_parameter_closing_unclosed__400(self):
+        self.login(username="admin")
+        request_payload = get_query_context("birth_names")
+        request_payload["queries"][0]["filters"] = []
+        request_payload["queries"][0]["extras"][
+            "where"
+        ] = "state = 'CA') OR (state = 'NY'"
+
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
+
+        assert rv.status_code == 400
+
+    @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
+    def test_chart_data_with_invalid_having_parameter_closing_and_comment__400(self):
+        self.login(username="admin")
+        request_payload = get_query_context("birth_names")
+        request_payload["queries"][0]["filters"] = []
+        request_payload["queries"][0]["extras"][
+            "having"
+        ] = "COUNT(1) = 0) UNION ALL SELECT 'abc', 1--comment"
+
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
+
+        assert rv.status_code == 400
 
     def test_chart_data_with_invalid_datasource(self):
         """
@@ -1420,7 +1583,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         self.login(username="admin")
         payload = get_query_context("birth_names")
         payload["datasource"] = "abc"
-        rv = self.post_assert_metric(CHART_DATA_URI, payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, payload, "data")
         self.assertEqual(rv.status_code, 400)
 
     def test_chart_data_with_invalid_enum_value(self):
@@ -1442,7 +1605,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         """
         self.login(username="gamma")
         payload = get_query_context("birth_names")
-        rv = self.post_assert_metric(CHART_DATA_URI, payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, payload, "data")
         self.assertEqual(rv.status_code, 401)
         response_payload = json.loads(rv.data.decode("utf-8"))
         assert (
@@ -1464,7 +1627,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         request_payload["queries"][0]["extras"][
             "where"
         ] = "('boy' = '{{ filter_values('gender', 'xyz' )[0] }}')"
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         response_payload = json.loads(rv.data.decode("utf-8"))
         result = response_payload["result"][0]["query"]
         if get_example_database().backend != "presto":
@@ -1479,7 +1642,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         async_query_manager.init_app(app)
         self.login(username="admin")
         request_payload = get_query_context("birth_names")
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         self.assertEqual(rv.status_code, 202)
         data = json.loads(rv.data.decode("utf-8"))
         keys = list(data.keys())
@@ -1511,7 +1674,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         ) as patched_run:
             request_payload = get_query_context("birth_names")
             request_payload["result_type"] = utils.ChartDataResultType.FULL
-            rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+            rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
             self.assertEqual(rv.status_code, 200)
             data = json.loads(rv.data.decode("utf-8"))
             patched_run.assert_called_once_with(force_cached=True)
@@ -1527,7 +1690,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         self.login(username="admin")
         request_payload = get_query_context("birth_names")
         request_payload["result_type"] = "results"
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         self.assertEqual(rv.status_code, 200)
 
     @with_feature_flags(GLOBAL_ASYNC_QUERIES=True)
@@ -1698,6 +1861,9 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         chart = db.session.query(Slice).filter_by(uuid=chart_config["uuid"]).one()
         assert chart.table == dataset
 
+        chart.owners = []
+        dataset.owners = []
+        database.owners = []
         db.session.delete(chart)
         db.session.delete(dataset)
         db.session.delete(database)
@@ -1767,6 +1933,9 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         dataset = database.tables[0]
         chart = db.session.query(Slice).filter_by(uuid=chart_config["uuid"]).one()
 
+        chart.owners = []
+        dataset.owners = []
+        database.owners = []
         db.session.delete(chart)
         db.session.delete(dataset)
         db.session.delete(database)
@@ -1858,7 +2027,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         event["value"] = event_layer.id
         annotation_layers.append(event)
 
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         self.assertEqual(rv.status_code, 200)
         data = json.loads(rv.data.decode("utf-8"))
         # response should only contain interval and event data, not formula
@@ -1902,7 +2071,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
         request_payload = get_query_context("birth_names")
         request_payload["queries"][0]["is_rowcount"] = True
         request_payload["queries"][0]["groupby"] = ["name"]
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         response_payload = json.loads(rv.data.decode("utf-8"))
         result = response_payload["result"][0]
         expected_row_count = self.get_expected_row_count("client_id_4")
@@ -1919,7 +2088,7 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
             {"result_type": utils.ChartDataResultType.TIMEGRAINS},
             {"result_type": utils.ChartDataResultType.COLUMNS},
         ]
-        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "post_data")
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
         response_payload = json.loads(rv.data.decode("utf-8"))
         timegrain_result = response_payload["result"][0]
         column_result = response_payload["result"][1]
@@ -1933,3 +2102,79 @@ class TestChartApi(SupersetTestCase, ApiOwnersTestCaseMixin, InsertChartMixin):
             "verbose_name",
             "dtype",
         ]
+
+    @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
+    def test_chart_data_series_limit(self):
+        """
+        Chart data API: Query total rows
+        """
+        SERIES_LIMIT = 5
+        self.login(username="admin")
+        request_payload = get_query_context("birth_names")
+        request_payload["queries"][0]["columns"] = ["state", "name"]
+        request_payload["queries"][0]["series_columns"] = ["name"]
+        request_payload["queries"][0]["series_limit"] = SERIES_LIMIT
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
+        response_payload = json.loads(rv.data.decode("utf-8"))
+        data = response_payload["result"][0]["data"]
+        unique_names = set(row["name"] for row in data)
+        self.maxDiff = None
+        self.assertEqual(len(unique_names), SERIES_LIMIT)
+        self.assertEqual(
+            set(column for column in data[0].keys()), {"state", "name", "sum__num"}
+        )
+
+    @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
+    def test_chart_data_virtual_table_with_colons(self):
+        """
+        Chart data API: test query with literal colon characters in query, metrics,
+        where clause and filters
+        """
+        self.login(username="admin")
+        owner = self.get_user("admin").id
+        user = db.session.query(security_manager.user_model).get(owner)
+
+        table = SqlaTable(
+            table_name="virtual_table_1",
+            schema=get_example_default_schema(),
+            owners=[user],
+            database=get_example_database(),
+            sql="select ':foo' as foo, ':bar:' as bar, state, num from birth_names",
+        )
+        db.session.add(table)
+        db.session.commit()
+        table.fetch_metadata()
+
+        request_payload = get_query_context("birth_names")
+        request_payload["datasource"] = {
+            "type": "table",
+            "id": table.id,
+        }
+        request_payload["queries"][0]["columns"] = ["foo", "bar", "state"]
+        request_payload["queries"][0]["where"] = "':abc' != ':xyz:qwerty'"
+        request_payload["queries"][0]["orderby"] = None
+        request_payload["queries"][0]["metrics"] = [
+            {
+                "expressionType": AdhocMetricExpressionType.SQL,
+                "sqlExpression": "sum(case when state = ':asdf' then 0 else 1 end)",
+                "label": "count",
+            }
+        ]
+        request_payload["queries"][0]["filters"] = [
+            {"col": "foo", "op": "!=", "val": ":qwerty:",}
+        ]
+
+        rv = self.post_assert_metric(CHART_DATA_URI, request_payload, "data")
+        db.session.delete(table)
+        db.session.commit()
+        assert rv.status_code == 200
+        response_payload = json.loads(rv.data.decode("utf-8"))
+        result = response_payload["result"][0]
+        data = result["data"]
+        assert {col for col in data[0].keys()} == {"foo", "bar", "state", "count"}
+        # make sure results and query parameters are unescaped
+        assert {row["foo"] for row in data} == {":foo"}
+        assert {row["bar"] for row in data} == {":bar:"}
+        assert "':asdf'" in result["query"]
+        assert "':xyz:qwerty'" in result["query"]
+        assert "':qwerty:'" in result["query"]

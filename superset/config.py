@@ -20,7 +20,8 @@ All configuration in this file can be overridden by providing a superset_config
 in your PYTHONPATH as there is a ``from superset_config import *``
 at the end of this file.
 """
-import imp
+# pylint: disable=too-many-lines
+import imp  # pylint: disable=deprecated-module
 import importlib.util
 import json
 import logging
@@ -37,10 +38,10 @@ from dateutil import tz
 from flask import Blueprint
 from flask_appbuilder.security.manager import AUTH_DB
 from pandas.io.parsers import STR_NA_VALUES
+from werkzeug.local import LocalProxy
 
-from superset.jinja_context import (  # pylint: disable=unused-import
-    BaseTemplateProcessor,
-)
+from superset.constants import CHANGE_ME_SECRET_KEY
+from superset.jinja_context import BaseTemplateProcessor
 from superset.stats_logger import DummyStatsLogger
 from superset.typing import CacheConfig
 from superset.utils.core import is_test, parse_boolean_string
@@ -51,12 +52,9 @@ from superset.utils.logging_configurator import DefaultLoggingConfigurator
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from flask_appbuilder.security.sqla import models  # pylint: disable=unused-import
-
-    from superset.connectors.sqla.models import (  # pylint: disable=unused-import
-        SqlaTable,
-    )
-    from superset.models.core import Database  # pylint: disable=unused-import
+    from flask_appbuilder.security.sqla import models
+    from superset.connectors.sqla.models import SqlaTable
+    from superset.models.core import Database
 
 # Realtime stats logger, a StatsD implementation exists
 STATS_LOGGER = DummyStatsLogger()
@@ -96,9 +94,7 @@ def _try_json_readversion(filepath: str) -> Optional[str]:
         return None
 
 
-def _try_json_readsha(  # pylint: disable=unused-argument
-    filepath: str, length: int
-) -> Optional[str]:
+def _try_json_readsha(filepath: str, length: int) -> Optional[str]:
     try:
         with open(filepath, "r") as f:
             return json.load(f).get("GIT_SHA")[:length]
@@ -119,12 +115,16 @@ VERSION_STRING = _try_json_readversion(VERSION_INFO_FILE) or _try_json_readversi
 VERSION_SHA_LENGTH = 8
 VERSION_SHA = _try_json_readsha(VERSION_INFO_FILE, VERSION_SHA_LENGTH)
 
+# Build number is shown in the About section if available. This
+# can be replaced at build time to expose build information.
+BUILD_NUMBER = None
+
 # default viz used in chart explorer
 DEFAULT_VIZ_TYPE = "table"
 
+# default row limit when requesting chart data
 ROW_LIMIT = 50000
-VIZ_ROW_LIMIT = 10000
-# max rows retreieved when requesting samples from datasource in explore view
+# default row limit when requesting samples from datasource in explore view
 SAMPLES_ROW_LIMIT = 1000
 # max rows retrieved by filter select auto complete
 FILTER_SELECT_ROW_LIMIT = 10000
@@ -154,8 +154,10 @@ CUSTOM_SECURITY_MANAGER = None
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 # ---------------------------------------------------------
 
-# Your App secret key
-SECRET_KEY = "\2\1thisismyscretkey\1\2\\e\\y\\y\\h"
+# Your App secret key. Make sure you override it on superset_config.py.
+# Use a strong complex alphanumeric string and use a tool to help you generate
+# a sufficiently random sequence, ex: openssl rand -base64 42"
+SECRET_KEY = CHANGE_ME_SECRET_KEY
 
 # The SQLAlchemy connection string.
 SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(DATA_DIR, "superset.db")
@@ -180,9 +182,9 @@ SQLALCHEMY_CUSTOM_PASSWORD_STORE = None
 # Note: the default impl leverages SqlAlchemyUtils' EncryptedType, which defaults
 #  to AES-128 under the covers using the app's SECRET_KEY as key material.
 #
-# pylint: disable=C0103
-SQLALCHEMY_ENCRYPTED_FIELD_TYPE_ADAPTER = SQLAlchemyUtilsAdapter
-
+SQLALCHEMY_ENCRYPTED_FIELD_TYPE_ADAPTER = (  # pylint: disable=invalid-name
+    SQLAlchemyUtilsAdapter
+)
 # The limit of queries fetched for query search
 QUERY_SEARCH_LIMIT = 1000
 
@@ -195,6 +197,10 @@ WTF_CSRF_EXEMPT_LIST = ["superset.views.core.log", "superset.charts.api.data"]
 # Whether to run the web server in debug mode or not
 DEBUG = os.environ.get("FLASK_ENV") == "development"
 FLASK_USE_RELOAD = True
+
+# Enable profiling of Python calls. Turn this on and append ``?_instrument=1``
+# to the page to see the call stack.
+PROFILING = False
 
 # Superset allows server-side python stacktraces to be surfaced to the
 # user when this feature is on. This may has security implications
@@ -293,7 +299,7 @@ PUBLIC_ROLE_LIKE: Optional[str] = None
 # Babel config for translations
 # ---------------------------------------------------
 # Setup default language
-BABEL_DEFAULT_LOCALE = "es"
+BABEL_DEFAULT_LOCALE = "en"
 # Your application default translation path
 BABEL_DEFAULT_FOLDER = "superset/translations"
 # The allowed translation for you app
@@ -331,6 +337,8 @@ DEFAULT_FEATURE_FLAGS: Dict[str, bool] = {
     # Experimental feature introducing a client (browser) cache
     "CLIENT_CACHE": False,
     "DISABLE_DATASET_SOURCE_EDIT": False,
+    # When using a recent version of Druid that supports JOINs turn this on
+    "DRUID_JOINS": False,
     "DYNAMIC_PLUGINS": False,
     # For some security concerns, you may need to enforce CSRF protection on
     # all query request to explore_json endpoint. In Superset, we use
@@ -364,7 +372,7 @@ DEFAULT_FEATURE_FLAGS: Dict[str, bool] = {
     "DISPLAY_MARKDOWN_HTML": True,
     # When True, this escapes HTML (rather than rendering it) in Markdown components
     "ESCAPE_MARKDOWN_HTML": False,
-    "DASHBOARD_NATIVE_FILTERS": False,
+    "DASHBOARD_NATIVE_FILTERS": True,
     "DASHBOARD_CROSS_FILTERS": False,
     "DASHBOARD_NATIVE_FILTERS_SET": False,
     "DASHBOARD_FILTERS_EXPERIMENTAL": False,
@@ -384,6 +392,7 @@ DEFAULT_FEATURE_FLAGS: Dict[str, bool] = {
     "OMNIBAR": False,
     "DASHBOARD_RBAC": False,
     "ENABLE_EXPLORE_DRAG_AND_DROP": False,
+    "ENABLE_DND_WITH_CLICK_UX": False,
     # Enabling ALERTS_ATTACH_REPORTS, the system sends email and slack message
     # with screenshot and link
     # Disables ALERTS_ATTACH_REPORTS, the system DOES NOT generate screenshot
@@ -429,6 +438,27 @@ FEATURE_FLAGS: Dict[str, bool] = {}
 #         feature_flags_dict['some_feature'] = g.user and g.user.get_id() == 5
 #     return feature_flags_dict
 GET_FEATURE_FLAGS_FUNC: Optional[Callable[[Dict[str, bool]], Dict[str, bool]]] = None
+# A function that receives a feature flag name and an optional default value.
+# Has a similar utility to GET_FEATURE_FLAGS_FUNC but it's useful to not force the
+# evaluation of all feature flags when just evaluating a single one.
+#
+# Note that the default `get_feature_flags` will evaluate each feature with this
+# callable when the config key is set, so don't use both GET_FEATURE_FLAGS_FUNC
+# and IS_FEATURE_ENABLED_FUNC in conjunction.
+IS_FEATURE_ENABLED_FUNC: Optional[Callable[[str, Optional[bool]], bool]] = None
+# A function that expands/overrides the frontend `bootstrap_data.common` object.
+# Can be used to implement custom frontend functionality,
+# or dynamically change certain configs.
+#
+# Values in `bootstrap_data.common` should have these characteristics:
+# - They are not specific to a page the user is visiting
+# - They do not contain secrets
+#
+# Takes as a parameter the common bootstrap payload before transformations.
+# Returns a dict containing data that should be added or overridden to the payload.
+COMMON_BOOTSTRAP_OVERRIDES_FUNC: Callable[
+    [Dict[str, Any]], Dict[str, Any]
+] = lambda data: {}  # default: empty dict
 
 # EXTRA_CATEGORICAL_COLOR_SCHEMES is used for adding custom categorical color schemes
 # example code for "My custom warm to hot" color scheme
@@ -437,6 +467,7 @@ GET_FEATURE_FLAGS_FUNC: Optional[Callable[[Dict[str, bool]], Dict[str, bool]]] =
 #         "id": 'myVisualizationColors',
 #         "description": '',
 #         "label": 'My Visualization Colors',
+#         "isDefault": True,
 #         "colors":
 #          ['#006699', '#009DD9', '#5AAA46', '#44AAAA', '#DDAA77', '#7799BB', '#88AA77',
 #          '#552288', '#5AAA46', '#CC7788', '#EEDD55', '#9977BB', '#BBAA44', '#DDCCDD']
@@ -471,6 +502,7 @@ THEME_OVERRIDES: Dict[str, Any] = {}
 #         "description": '',
 #         "isDiverging": True,
 #         "label": 'My custom warm to hot',
+#         "isDefault": True,
 #         "colors":
 #          ['#552288', '#5AAA46', '#CC7788', '#EEDD55', '#9977BB', '#BBAA44', '#DDCCDD',
 #          '#006699', '#009DD9', '#5AAA46', '#44AAAA', '#DDAA77', '#7799BB', '#88AA77']
@@ -544,12 +576,13 @@ SUPERSET_WEBSERVER_DOMAINS = None
 # Allowed format types for upload on Database view
 EXCEL_EXTENSIONS = {"xlsx", "xls"}
 CSV_EXTENSIONS = {"csv", "tsv", "txt"}
-ALLOWED_EXTENSIONS = {*EXCEL_EXTENSIONS, *CSV_EXTENSIONS}
+COLUMNAR_EXTENSIONS = {"parquet", "zip"}
+ALLOWED_EXTENSIONS = {*EXCEL_EXTENSIONS, *CSV_EXTENSIONS, *COLUMNAR_EXTENSIONS}
 
 # CSV Options: key/value pairs that will be passed as argument to DataFrame.to_csv
 # method.
 # note: index option should not be overridden
-CSV_EXPORT = {"encoding": "utf_8_sig"}
+CSV_EXPORT = {"encoding": "utf-8"}
 
 # ---------------------------------------------------
 # Time grain configurations
@@ -643,9 +676,7 @@ QUERY_LOGGER = None
 # Set this API key to enable Mapbox visualizations
 MAPBOX_API_KEY = os.environ.get("MAPBOX_API_KEY", "")
 
-# Maximum number of rows returned from a database
-# in async mode, no more than SQL_MAX_ROW will be returned and stored
-# in the results backend. This also becomes the limit when exporting CSVs
+# Maximum number of rows returned for any analytical database query
 SQL_MAX_ROW = 100000
 
 # Maximum number of rows displayed in SQL Lab UI
@@ -814,7 +845,7 @@ CSV_TO_HIVE_UPLOAD_S3_BUCKET = None
 CSV_TO_HIVE_UPLOAD_DIRECTORY = "EXTERNAL_HIVE_TABLES/"
 # Function that creates upload directory dynamically based on the
 # database used, user and schema provided.
-def CSV_TO_HIVE_UPLOAD_DIRECTORY_FUNC(
+def CSV_TO_HIVE_UPLOAD_DIRECTORY_FUNC(  # pylint: disable=invalid-name
     database: "Database",
     user: "models.User",  # pylint: disable=unused-argument
     schema: Optional[str],
@@ -923,7 +954,7 @@ TRACKING_URL_TRANSFORMER = lambda x: x
 HIVE_POLL_INTERVAL = int(timedelta(seconds=5).total_seconds())
 
 # Interval between consecutive polls when using Presto Engine
-# See here: https://github.com/dropbox/PyHive/blob/8eb0aeab8ca300f3024655419b93dad926c1a351/pyhive/presto.py#L93  # pylint: disable=line-too-long
+# See here: https://github.com/dropbox/PyHive/blob/8eb0aeab8ca300f3024655419b93dad926c1a351/pyhive/presto.py#L93  # pylint: disable=line-too-long,useless-suppression
 PRESTO_POLL_INTERVAL = int(timedelta(seconds=1).total_seconds())
 
 # Allow for javascript controls components
@@ -959,7 +990,14 @@ DB_CONNECTION_MUTATOR = None
 #    def SQL_QUERY_MUTATOR(sql, user_name, security_manager, database):
 #        dttm = datetime.now().isoformat()
 #        return f"-- [SQL LAB] {username} {dttm}\n{sql}"
-SQL_QUERY_MUTATOR = None
+def SQL_QUERY_MUTATOR(  # pylint: disable=invalid-name,unused-argument
+    sql: str,
+    user_name: Optional[str],
+    security_manager: LocalProxy,
+    database: "Database",
+) -> str:
+    return sql
+
 
 # Enable / disable scheduled email reports
 #
@@ -1229,55 +1267,12 @@ GLOBAL_ASYNC_QUERIES_WEBSOCKET_URL = "ws://127.0.0.1:8080/"
 #
 DATASET_HEALTH_CHECK: Optional[Callable[["SqlaTable"], str]] = None
 
+# Do not show user info or profile in the menu
+MENU_HIDE_USER_INFO = False
+
 # SQLalchemy link doc reference
 SQLALCHEMY_DOCS_URL = "https://docs.sqlalchemy.org/en/13/core/engines.html"
 SQLALCHEMY_DISPLAY_TEXT = "SQLAlchemy docs"
-
-
-
-# Setup default language
-BABEL_DEFAULT_LOCALE = "es"
-# Your application default translation path
-BABEL_DEFAULT_FOLDER = "superset/translations"
-# The allowed translation for you app
-LANGUAGES = {
-    "es": {"flag": "es", "name": "Spanish"},
-}
-
-# Specify the App icon
-APP_ICON = "/static/assets/images/sb_logo.png"
-APP_ICON_WIDTH = 70
-
-# Specify where clicking the logo would take the user
-# e.g. setting it to '/' would take the user to '/superset/welcome/'
-LOGO_TARGET_PATH = '/dashboard/list/'
-
-
-
-# Multiple favicons can be specified here. The "href" property
-# is mandatory, but "sizes," "type," and "rel" are optional.
-# For example:
-# {
-#     "href":path/to/image.png",
-#     "sizes": "16x16",
-#     "type": "image/png"
-#     "rel": "icon"
-# },
-FAVICONS = [{"href": "/static/assets/images/sb_favicon.ico"}]
-
-
-
-# Uncomment to setup Your App name
-APP_NAME = "Estadísticas | Superintendencia de Bancos"
-
-# WTF_CSRF_ENABLED = False
-SESSION_COOKIE_SAMESITE = "None"
-# WTF_CSRF_EXEMPT_LIST = []
-SESSION_COOKIE_SECURE = True
-# ENABLE_CORS = False
-
-# CSV_EXPORT = {"encoding": "utf_8_sig"}
-
 
 # -------------------------------------------------------------------
 # *                WARNING:  STOP EDITING  HERE                    *
@@ -1304,32 +1299,9 @@ if CONFIG_PATH_ENV_VAR in os.environ:
 elif importlib.util.find_spec("superset_config") and not is_test():
     try:
         import superset_config  # pylint: disable=import-error
-        from superset_config import *  # type: ignore # pylint: disable=import-error,wildcard-import,unused-wildcard-import
+        from superset_config import *  # type: ignore # pylint: disable=import-error,wildcard-import
 
         print(f"Loaded your LOCAL configuration at [{superset_config.__file__}]")
     except Exception:
         logger.exception("Found but failed to import local superset_config")
         raise
-
-#############################################################################
-###################################ESTUDIOS############################################
-######################################################################################
-
-
-
-# Multiple favicons can be specified here. The "href" property
-# is mandatory, but "sizes," "type," and "rel" are optional.
-# For example:
-# {
-#     "href":path/to/image.png",
-#     "sizes": "16x16",
-#     "type": "image/png"
-#     "rel": "icon"
-# },
-FAVICONS = [{"href": "/static/assets/images/sb_favicon.ico"}]
-
-
-
-# Uncomment to setup Your App name
-APP_NAME = "Estadísticas | Superintendencia de Bancos"
-

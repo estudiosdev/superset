@@ -119,6 +119,18 @@ class BaseDatasource(
         return DatasourceKind.VIRTUAL if self.sql else DatasourceKind.PHYSICAL
 
     @property
+    def owners_data(self) -> List[Dict[str, Any]]:
+        return [
+            {
+                "first_name": o.first_name,
+                "last_name": o.last_name,
+                "username": o.username,
+                "id": o.id,
+            }
+            for o in self.owners
+        ]
+
+    @property
     def is_virtual(self) -> bool:
         return self.kind == DatasourceKind.VIRTUAL
 
@@ -374,6 +386,8 @@ class BaseDatasource(
                     return None
                 if value == "<empty string>":
                     return ""
+            if target_column_type == utils.GenericDataType.BOOLEAN:
+                return utils.cast_to_boolean(value)
             return value
 
         if isinstance(values, (list, tuple)):

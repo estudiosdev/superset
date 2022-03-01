@@ -27,6 +27,8 @@ from superset.models.core import Database
 from superset.models.dashboard import Dashboard
 from superset.models.slice import Slice
 from superset.views.base import DatasourceFilter
+from sqlalchemy.sql.expression import literal
+
 
 logger = logging.getLogger(__name__)
 
@@ -86,23 +88,27 @@ class DatasetDAO(BaseDAO):  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def validate_uniqueness(database_id: int, schema: Optional[str], name: str) -> bool:
-        dataset_query = db.session.query(SqlaTable).filter(
-            SqlaTable.table_name == name,
-            SqlaTable.schema == schema,
-            SqlaTable.database_id == database_id,
-        )
-        return not db.session.query(dataset_query.exists()).scalar()
+        result = db.session.query(literal(True)).filter(
+            db.session.query(SqlaTable).filter(
+                SqlaTable.table_name == name,
+                SqlaTable.schema == schema,
+                SqlaTable.database_id == database_id,
+            ).exists()
+        ).scalar()
+        return not result
 
     @staticmethod
     def validate_update_uniqueness(
         database_id: int, dataset_id: int, name: str
     ) -> bool:
-        dataset_query = db.session.query(SqlaTable).filter(
-            SqlaTable.table_name == name,
-            SqlaTable.database_id == database_id,
-            SqlaTable.id != dataset_id,
-        )
-        return not db.session.query(dataset_query.exists()).scalar()
+        result = db.session.query(literal(True)).filter(
+            db.session.query(SqlaTable).filter(
+                SqlaTable.table_name == name,
+                SqlaTable.database_id == database_id,
+                SqlaTable.id != dataset_id,
+            ).exists()
+        ).scalar()
+        return not result
 
     @staticmethod
     def validate_columns_exist(dataset_id: int, columns_ids: List[int]) -> bool:
@@ -143,31 +149,22 @@ class DatasetDAO(BaseDAO):  # pylint: disable=too-many-public-methods
         return len(dataset_query) == 0
 
     @classmethod
-    def update(  # pylint: disable=arguments-differ
-        cls,
-        model: SqlaTable,
-        properties: Dict[str, Any],
-        commit: bool = True,
-        override_columns: bool = False,
+    def update(
+        cls, model: SqlaTable, properties: Dict[str, Any], commit: bool = True
     ) -> Optional[SqlaTable]:
         """
         Updates a Dataset model on the metadata DB
         """
+
         if "columns" in properties:
             properties["columns"] = cls.update_columns(
                 model, properties.get("columns", []), commit=commit
             )
+
         if "metrics" in properties:
             properties["metrics"] = cls.update_metrics(
                 model, properties.get("metrics", []), commit=commit
             )
-
-        if override_columns:
-            # remove columns initially for full refresh
-            original_properties = properties["columns"]
-            properties["columns"] = []
-            super().update(model, properties, commit=commit)
-            properties["columns"] = original_properties
 
         return super().update(model, properties, commit=False)
 
@@ -219,7 +216,7 @@ class DatasetDAO(BaseDAO):  # pylint: disable=too-many-public-methods
         - If there are extra metrics on the metadata db that are not defined on the List
         then we delete.
         """
-        new_metrics = list()
+        new_metrics = []
         for metric in property_metrics:
             metric_id = metric.get("id")
             if metric.get("id"):

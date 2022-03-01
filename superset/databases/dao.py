@@ -23,6 +23,7 @@ from superset.extensions import db
 from superset.models.core import Database
 from superset.models.dashboard import Dashboard
 from superset.models.slice import Slice
+from sqlalchemy.sql.expression import literal
 
 logger = logging.getLogger(__name__)
 
@@ -33,17 +34,21 @@ class DatabaseDAO(BaseDAO):
 
     @staticmethod
     def validate_uniqueness(database_name: str) -> bool:
-        database_query = db.session.query(Database).filter(
-            Database.database_name == database_name
-        )
-        return not db.session.query(database_query.exists()).scalar()
+        result = db.session.query(literal(True)).filter(
+            db.session.query(Database).filter(
+                Database.database_name == database_name
+            ).exists()
+        ).scalar()
+        return not result
 
     @staticmethod
     def validate_update_uniqueness(database_id: int, database_name: str) -> bool:
-        database_query = db.session.query(Database).filter(
-            Database.database_name == database_name, Database.id != database_id,
-        )
-        return not db.session.query(database_query.exists()).scalar()
+        result = db.session.query(literal(True)).filter(
+            db.session.query(Database).filter(
+                Database.database_name == database_name, Database.id != database_id,
+            ).exists()
+        ).scalar()
+        return not result
 
     @staticmethod
     def get_database_by_name(database_name: str) -> Optional[Database]:

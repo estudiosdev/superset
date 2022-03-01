@@ -136,7 +136,7 @@ function DashboardCard({
       )}
     </Menu>
   );
-  
+
   const loggedUserProps = {
     description: t('Modified %s', dashboard.changed_on_delta_humanized),
     actions: (
@@ -171,6 +171,11 @@ function DashboardCard({
       <ListViewCard
         loading={dashboard.loading || false}
         title={dashboard.dashboard_title}
+        certifiedBy={dashboard.certified_by}
+        certificationDetails={dashboard.certification_details}
+        titleRight={
+          <Label>{dashboard.published ? t('published') : t('draft')}</Label>
+        }
         cover={
           !isFeatureEnabled(FeatureFlag.THUMBNAILS) || !showThumbnails ? (
             <></>
