@@ -371,7 +371,7 @@ const propTypes = {
 };
 
 const defaultProps = {
-  onChange: () => { },
+  onChange: () => {},
 };
 
 function OwnersSelector({ datasource, onChange }) {
@@ -716,10 +716,10 @@ class DatasourceEditor extends React.PureComponent {
             label={t('Autocomplete query predicate')}
             description={t(
               'When using "Autocomplete filters", this can be used to improve performance ' +
-              'of the query fetching the values. Use this option to apply a ' +
-              'predicate (WHERE clause) to the query selecting the distinct ' +
-              'values from the table. Typically the intent would be to limit the scan ' +
-              'by applying a relative time filter on a partitioned or indexed time-related field.',
+                'of the query fetching the values. Use this option to apply a ' +
+                'predicate (WHERE clause) to the query selecting the distinct ' +
+                'values from the table. Typically the intent would be to limit the scan ' +
+                'by applying a relative time filter on a partitioned or indexed time-related field.',
             )}
             control={
               <TextAreaControl
@@ -736,9 +736,9 @@ class DatasourceEditor extends React.PureComponent {
             label={t('Extra')}
             description={t(
               'Extra data to specify table metadata. Currently supports ' +
-              'metadata of the format: `{ "certification": { "certified_by": ' +
-              '"Data Platform Team", "details": "This table is the source of truth." ' +
-              '}, "warning_markdown": "This is a warning." }`.',
+                'metadata of the format: `{ "certification": { "certified_by": ' +
+                '"Data Platform Team", "details": "This table is the source of truth." ' +
+                '}, "warning_markdown": "This is a warning." }`.',
             )}
             control={
               <TextAreaControl
@@ -898,8 +898,8 @@ class DatasourceEditor extends React.PureComponent {
                     label={t('SQL')}
                     description={t(
                       'When specifying SQL, the datasource acts as a view. ' +
-                      'Superset will use this statement as a subquery while grouping and filtering ' +
-                      'on the generated parent queries.',
+                        'Superset will use this statement as a subquery while grouping and filtering ' +
+                        'on the generated parent queries.',
                     )}
                     control={
                       <TextAreaControl
@@ -953,22 +953,22 @@ class DatasourceEditor extends React.PureComponent {
                         onSchemaChange={
                           this.state.isEditMode
                             ? schema =>
-                              this.onDatasourcePropChange('schema', schema)
+                                this.onDatasourcePropChange('schema', schema)
                             : undefined
                         }
                         onDbChange={
                           this.state.isEditMode
                             ? database =>
-                              this.onDatasourcePropChange(
-                                'database',
-                                database,
-                              )
+                                this.onDatasourcePropChange(
+                                  'database',
+                                  database,
+                                )
                             : undefined
                         }
                         onTableChange={
                           this.state.isEditMode
                             ? table =>
-                              this.onDatasourcePropChange('table_name', table)
+                                this.onDatasourcePropChange('table_name', table)
                             : undefined
                         }
                         readOnly={!this.state.isEditMode}
@@ -977,8 +977,8 @@ class DatasourceEditor extends React.PureComponent {
                   }
                   description={t(
                     'The pointer to a physical table (or view). Keep in mind that the chart is ' +
-                    'associated to this Superset logical table, and this logical table points ' +
-                    'the physical table referenced here.',
+                      'associated to this Superset logical table, and this logical table points ' +
+                      'the physical table referenced here.',
                   )}
                 />
               )}

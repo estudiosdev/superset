@@ -74,7 +74,7 @@ const getOptionsForSavedMetrics = (
   savedMetrics?.filter(savedMetric =>
     Array.isArray(currentMetricValues)
       ? !currentMetricValues.includes(savedMetric.metric_name ?? '') ||
-      savedMetric.metric_name === currentMetric
+        savedMetric.metric_name === currentMetric
       : savedMetric,
   ) ?? [];
 
@@ -212,10 +212,10 @@ export const DndMetricSelect = (props: any) => {
         if (
           // compare saved metrics
           ('metric_name' in oldMetric && value === oldMetric.metric_name) ||
-            // compare adhoc metrics
-            typeof (value as AdhocMetric).optionName !== 'undefined'
+          // compare adhoc metrics
+          typeof (value as AdhocMetric).optionName !== 'undefined'
             ? (value as AdhocMetric).optionName ===
-            (oldMetric as AdhocMetric).optionName
+              (oldMetric as AdhocMetric).optionName
             : false
         ) {
           return changedMetric;
@@ -364,15 +364,15 @@ export const DndMetricSelect = (props: any) => {
 
   const ghostButtonText = isFeatureEnabled(FeatureFlag.ENABLE_DND_WITH_CLICK_UX)
     ? tn(
-      'Drop a column/metric here or click',
-      'Drop columns/metrics here or click',
-      multi ? 2 : 1,
-    )
+        'Drop a column/metric here or click',
+        'Drop columns/metrics here or click',
+        multi ? 2 : 1,
+      )
     : tn(
-      'Drop column or metric here',
-      'Drop columns or metrics here',
-      multi ? 2 : 1,
-    );
+        'Drop column or metric here',
+        'Drop columns or metrics here',
+        multi ? 2 : 1,
+      );
 
   return (
     <div className="metrics-select">

@@ -217,8 +217,8 @@ const Select = ({
   const mappedMode = isSingleMode
     ? undefined
     : allowNewOptions
-      ? 'tags'
-      : 'multiple';
+    ? 'tags'
+    : 'multiple';
 
   // TODO: Don't assume that isAsync is always labelInValue
   const handleTopOptions = useCallback(
@@ -411,14 +411,14 @@ const Select = ({
         if (allowNewOptions && isSingleMode) {
           const newOption = searchValue &&
             !hasOption(searchValue, selectOptions) && {
-            label: searchValue,
-            value: searchValue,
-          };
+              label: searchValue,
+              value: searchValue,
+            };
           const newOptions = newOption
             ? [
-              newOption,
-              ...selectOptions.filter(opt => opt.value !== searchedValue),
-            ]
+                newOption,
+                ...selectOptions.filter(opt => opt.value !== searchedValue),
+              ]
             : [...selectOptions.filter(opt => opt.value !== searchedValue)];
 
           setSelectOptions(newOptions);

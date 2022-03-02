@@ -114,16 +114,16 @@ enum ActionType {
 
 type ReportActionType =
   | {
-    type: ActionType.inputChange;
-    payload: ReportPayloadType;
-  }
+      type: ActionType.inputChange;
+      payload: ReportPayloadType;
+    }
   | {
-    type: ActionType.fetched;
-    payload: Partial<ReportObject>;
-  }
+      type: ActionType.fetched;
+      payload: Partial<ReportObject>;
+    }
   | {
-    type: ActionType.reset;
-  };
+      type: ActionType.reset;
+    };
 
 const TEXT_BASED_VISUALIZATION_TYPES = [
   'pivot_table',

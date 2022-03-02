@@ -70,7 +70,7 @@ export interface DndFilterSelectProps
 }
 
 export const DndFilterSelect = (props: DndFilterSelectProps) => {
-  const { datasource, onChange = () => { }, name: controlName } = props;
+  const { datasource, onChange = () => {}, name: controlName } = props;
 
   const propsValues = Array.from(props.value ?? []);
   const [values, setValues] = useState(

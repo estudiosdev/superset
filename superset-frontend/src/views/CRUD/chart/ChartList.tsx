@@ -64,15 +64,15 @@ import ChartCard from './ChartCard';
 const PAGE_SIZE = 25;
 const PASSWORDS_NEEDED_MESSAGE = t(
   'The passwords for the databases below are needed in order to ' +
-  'import them together with the charts. Please note that the ' +
-  '"Secure Extra" and "Certificate" sections of ' +
-  'the database configuration are not present in export files, and ' +
-  'should be added manually after the import if they are needed.',
+    'import them together with the charts. Please note that the ' +
+    '"Secure Extra" and "Certificate" sections of ' +
+    'the database configuration are not present in export files, and ' +
+    'should be added manually after the import if they are needed.',
 );
 const CONFIRM_OVERWRITE_MESSAGE = t(
   'You are importing one or more charts that already exist. ' +
-  'Overwriting might cause you to lose some of your work. Are you ' +
-  'sure you want to overwrite?',
+    'Overwriting might cause you to lose some of your work. Are you ' +
+    'sure you want to overwrite?',
 );
 
 setupPlugins();
@@ -216,24 +216,24 @@ function ChartList(props: ChartListProps) {
     () => [
       ...(props.user.userId
         ? [
-          {
-            Cell: ({
-              row: {
-                original: { id },
-              },
-            }: any) => (
-              <FaveStar
-                itemId={id}
-                saveFaveStar={saveFavoriteStatus}
-                isStarred={favoriteStatus[id]}
-              />
-            ),
-            Header: '',
-            id: 'id',
-            disableSortBy: true,
-            size: 'xs',
-          },
-        ]
+            {
+              Cell: ({
+                row: {
+                  original: { id },
+                },
+              }: any) => (
+                <FaveStar
+                  itemId={id}
+                  saveFaveStar={saveFavoriteStatus}
+                  isStarred={favoriteStatus[id]}
+                />
+              ),
+              Header: '',
+              id: 'id',
+              disableSortBy: true,
+              size: 'xs',
+            },
+          ]
         : []),
       {
         Cell: ({

@@ -85,12 +85,6 @@ export function clearDataMaskState(): ClearDataMaskState {
   };
 }
 
-export function clearDataMaskState(): ClearDataMaskState {
-  return {
-    type: CLEAR_DATA_MASK_STATE,
-  };
-}
-
 export type AnyDataMaskAction =
   | ClearDataMaskState
   | UpdateDataMask

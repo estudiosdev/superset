@@ -52,7 +52,7 @@ const propTypes = {
 };
 
 const defaultProps = {
-  onChange: () => { },
+  onChange: () => {},
   clearable: true,
   savedMetrics: [],
   columns: [],
@@ -67,7 +67,7 @@ function getOptionsForSavedMetrics(
     savedMetrics?.filter(savedMetric =>
       Array.isArray(currentMetricValues)
         ? !currentMetricValues.includes(savedMetric.metric_name) ||
-        savedMetric.metric_name === currentMetric
+          savedMetric.metric_name === currentMetric
         : savedMetric,
     ) ?? []
   );
@@ -168,8 +168,8 @@ const MetricsControl = ({
         if (
           // compare saved metrics
           val === oldMetric.metric_name ||
-            // compare adhoc metrics
-            typeof val.optionName !== 'undefined'
+          // compare adhoc metrics
+          typeof val.optionName !== 'undefined'
             ? val.optionName === oldMetric.optionName
             : false
         ) {
@@ -335,11 +335,11 @@ const MetricsControl = ({
         {value.length > 0
           ? value.map((value, index) => valueRenderer(value, index))
           : addNewMetricPopoverTrigger(
-            <AddControlLabel>
-              <Icons.PlusSmall iconColor={theme.colors.grayscale.light1} />
-              {t('Add metric')}
-            </AddControlLabel>,
-          )}
+              <AddControlLabel>
+                <Icons.PlusSmall iconColor={theme.colors.grayscale.light1} />
+                {t('Add metric')}
+              </AddControlLabel>,
+            )}
       </LabelsContainer>
     </div>
   );

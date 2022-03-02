@@ -158,7 +158,7 @@ function DashboardCard({
     ),
     titleRight: (
       <Label>{dashboard.published ? t('published') : t('draft')}</Label>
-    )
+    ),
   };
   return (
     <CardStyles
@@ -186,7 +186,7 @@ function DashboardCard({
         imgURL={dashboard.thumbnail_url}
         imgFallbackURL="/static/assets/images/dashboard-card-fallback.svg"
         coverLeft={<FacePile users={dashboard.owners || []} />}
-        {...(!!userId ? loggedUserProps : {})}
+        {...(userId ? loggedUserProps : {})}
       />
     </CardStyles>
   );

@@ -200,10 +200,10 @@ export function DndColumnSelect(props: DndColumnSelectProps) {
     FeatureFlag.ENABLE_DND_WITH_CLICK_UX,
   )
     ? tn(
-      'Drop a column here or click',
-      'Drop columns here or click',
-      multi ? 2 : 1,
-    )
+        'Drop a column here or click',
+        'Drop columns here or click',
+        multi ? 2 : 1,
+      )
     : tn('Drop column here', 'Drop columns here', multi ? 2 : 1);
 
   return (

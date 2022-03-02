@@ -37,20 +37,16 @@ import { useImmerReducer } from 'use-immer';
 import { FormItemProps } from 'antd/lib/form';
 import { PluginFilterSelectProps, SelectValue } from './types';
 import { StyledFormItem, FilterPluginStyle, StatusMessage } from '../common';
-import {
-  formatFilterValue,
-  getDataRecordFormatter,
-  getSelectExtraFormData,
-} from '../../utils';
+import { getDataRecordFormatter, getSelectExtraFormData } from '../../utils';
 
 type DataMaskAction =
   | { type: 'ownState'; ownState: JsonObject }
   | {
-    type: 'filterState';
-    __cache: JsonObject;
-    extraFormData: ExtraFormData;
-    filterState: { value: SelectValue; label?: string };
-  };
+      type: 'filterState';
+      __cache: JsonObject;
+      extraFormData: ExtraFormData;
+      filterState: { value: SelectValue; label?: string };
+    };
 
 function reducer(
   draft: DataMask & { __cache?: JsonObject },
@@ -134,8 +130,8 @@ export default function PluginFilterSelect(props: PluginFilterSelectProps) {
           ...filterState,
           label: values?.length
             ? `${(values || [])
-              .map(value => labelFormatter(value, datatype))
-              .join(', ')}${suffix}`
+                .map(value => labelFormatter(value, datatype))
+                .join(', ')}${suffix}`
             : undefined,
           value:
             appSection === AppSection.FILTER_CONFIG_MODAL && defaultToFirstItem
